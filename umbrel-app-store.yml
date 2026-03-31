@@ -1,0 +1,9 @@
+id: salinas25lz-app-store
+name: Salinas App Store
+tagline: Apps personalizadas para mi Umbrel
+description: Mi tienda de apps personalizadas para Umbrel.
+developer: Salinas25lz
+website: https://github.com/Salinas25lz/umbrel-app-store
+repo: https://github.com/Salinas25lz/umbrel-app-store
+support: https://github.com/Salinas25lz/umbrel-app-store/issues
+version: "1.0.0"

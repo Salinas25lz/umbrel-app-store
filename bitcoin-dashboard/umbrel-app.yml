@@ -1,0 +1,20 @@
+manifestVersion: 1
+id: bitcoin-dashboard
+category: bitcoin
+name: Bitcoin Dashboard
+version: "1.0.0"
+tagline: Panel visual en tiempo real de la red Bitcoin
+description: >-
+  Dashboard visual con precio BTC, comisiones recomendadas, mempool,
+  bloques, dificultad, hashrate, supply circulante y cuenta atrás del halving.
+  Datos en tiempo real desde mempool.space. Sin configuración necesaria.
+developer: Salinas25lz
+website: https://github.com/Salinas25lz/umbrel-app-store
+dependencies: []
+repo: https://github.com/Salinas25lz/umbrel-app-store
+support: https://github.com/Salinas25lz/umbrel-app-store/issues
+port: 8765
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>₿ Bitcoin Dashboard</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:#07070f; color:#e0e0e0; min-height:100vh; padding:20px; }
+
+.header { text-align:center; padding:24px 0 16px; }
+.header h1 { font-size:2.2rem; font-weight:800; background:linear-gradient(135deg,#f7931a,#ffcc00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-1px; }
+.header .sub { color:#444; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; margin-top:5px; }
+.header .sub .dot { display:inline-block; width:7px; height:7px; background:#4caf82; border-radius:50%; margin-right:5px; animation:pulse 2s infinite; }
+#lastUpdated { color:#333; font-size:0.7rem; margin-top:6px; }
+
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; max-width:1400px; margin:24px auto; }
+.card { background:linear-gradient(145deg,#0f0f1a,#0b0b14); border:1px solid #1a1a2e; border-radius:14px; padding:20px; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s; }
+.card:hover { transform:translateY(-3px); border-color:#f7931a55; box-shadow:0 8px 30px #f7931a11; }
+.card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#f7931a88,transparent); }
+.card.wide { grid-column:span 2; }
+@media(max-width:680px){ .card.wide{ grid-column:span 1; } }
+
+.card-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:#444; margin-bottom:8px; }
+.card-value { font-size:1.9rem; font-weight:700; line-height:1.1; }
+.card-sub { font-size:0.75rem; color:#444; margin-top:6px; }
+.card-icon { position:absolute; top:16px; right:16px; font-size:1.6rem; opacity:0.12; }
+.tag { display:inline-block; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:600; margin-top:6px; }
+.tag.up { background:#4caf8222; color:#4caf82; }
+.tag.down { background:#ef476f22; color:#ef476f; }
+.tag.neutral { background:#5b9bd522; color:#5b9bd5; }
+
+/* Colors */
+.orange { color:#f7931a; }
+.green { color:#4caf82; }
+.blue { color:#5b9bd5; }
+.yellow { color:#ffd166; }
+.red { color:#ef476f; }
+.muted { color:#555; }
+
+/* Fees */
+.fee-bars { display:flex; gap:8px; margin-top:14px; align-items:flex-end; height:70px; }
+.fee-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+.fee-bar { width:100%; border-radius:5px 5px 0 0; transition:height 0.8s cubic-bezier(0.4,0,0.2,1); min-height:3px; }
+.fee-bar.f1 { background:linear-gradient(180deg,#ef476f,#c0392b); }
+.fee-bar.f2 { background:linear-gradient(180deg,#ff9f43,#e67e22); }
+.fee-bar.f3 { background:linear-gradient(180deg,#ffd166,#f39c12); }
+.fee-bar.f4 { background:linear-gradient(180deg,#4caf82,#27ae60); }
+.fee-bar.f5 { background:linear-gradient(180deg,#5b9bd5,#2980b9); }
+.fee-label { font-size:0.55rem; color:#444; text-transform:uppercase; letter-spacing:1px; text-align:center; }
+.fee-val { font-size:0.8rem; font-weight:700; color:#ccc; }
+
+/* Mempool blocks */
+.mblocks { display:flex; gap:6px; margin-top:14px; overflow-x:auto; padding-bottom:4px; flex-wrap:nowrap; }
+.mblock { flex-shrink:0; width:64px; height:64px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.6rem; text-align:center; border:1px solid #ffffff11; cursor:default; transition:transform 0.15s; }
+.mblock:hover { transform:scale(1.08); }
+.mblock .bn { font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.9); }
+.mblock .bs { font-size:0.55rem; color:rgba(255,255,255,0.6); margin-top:1px; }
+.mblock .bf { font-size:0.55rem; color:rgba(255,255,255,0.75); }
+
+/* Progress */
+.prog-wrap { margin-top:12px; background:#1a1a2e; border-radius:99px; height:6px; overflow:hidden; }
+.prog-bar { height:100%; border-radius:99px; background:linear-gradient(90deg,#f7931a,#ffcc00); transition:width 1s ease; }
+
+/* Sparkline */
+canvas#sparkline { width:100%; height:50px; margin-top:10px; opacity:0.85; }
+
+/* Hashrate mini chart */
+.hr-bars { display:flex; gap:4px; align-items:flex-end; height:40px; margin-top:12px; }
+.hr-bar { flex:1; border-radius:3px 3px 0 0; background:linear-gradient(180deg,#4caf82,#27ae60); min-height:2px; transition:height 0.6s; }
+
+/* Skeleton */
+.skel { background:linear-gradient(90deg,#1a1a2e 25%,#222235 50%,#1a1a2e 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:6px; height:1.9rem; width:75%; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+/* Modal */
+.modal-bg { display:none; position:fixed; inset:0; background:#000000cc; z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.modal-bg.open { display:flex; }
+.modal { background:#0f0f1a; border:1px solid #1e1e2e; border-radius:18px; padding:28px; max-width:520px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
+.modal h2 { font-size:1.2rem; font-weight:700; margin-bottom:18px; color:#f7931a; }
+.modal-close { position:absolute; top:16px; right:18px; font-size:1.2rem; cursor:pointer; color:#444; transition:color 0.2s; }
+.modal-close:hover { color:#fff; }
+.modal table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.modal table tr { border-bottom:1px solid #1a1a2e; }
+.modal table tr:last-child { border:none; }
+.modal table td { padding:8px 4px; }
+.modal table td:first-child { color:#555; width:55%; }
+.modal table td:last-child { color:#e0e0e0; font-weight:600; text-align:right; }
+
+.diff-ring { position:relative; width:90px; height:90px; margin:0 auto 16px; }
+.diff-ring svg { transform:rotate(-90deg); }
+.diff-ring .center-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>₿ Bitcoin Dashboard</h1>
+  <div class="sub"><span class="dot"></span>Live · tu nodo · 100% local</div>
+  <div id="lastUpdated">Cargando...</div>
+</div>
+
+<div class="grid">
+
+  <div class="card" onclick="openModal('price')">
+    <div class="card-icon">💰</div>
+    <div class="card-label">Precio BTC</div>
+    <div class="card-value orange" id="price"><div class="skel"></div></div>
+    <div id="priceTag"></div>
+    <canvas id="sparkline"></canvas>
+    <div class="card-sub" id="priceSub">–</div>
+  </div>
+
+  <div class="card" onclick="openModal('block')">
+    <div class="card-icon">📦</div>
+    <div class="card-label">Bloque actual</div>
+    <div class="card-value blue" id="blockHeight"><div class="skel"></div></div>
+    <div class="card-sub" id="blockTime">–</div>
+    <div class="card-sub" id="blockSize">–</div>
+  </div>
+
+  <div class="card" onclick="openModal('difficulty')">
+    <div class="card-icon">⛏️</div>
+    <div class="card-label">Dificultad · Ajuste</div>
+    <div class="card-value" id="difficulty"><div class="skel"></div></div>
+    <div class="card-sub" id="diffSub">–</div>
+    <div class="prog-wrap" style="margin-top:10px"><div class="prog-bar" id="diffProg" style="width:0%"></div></div>
+    <div class="card-sub" id="diffPct" style="margin-top:4px">–</div>
+  </div>
+
+  <div class="card" onclick="openModal('hashrate')">
+    <div class="card-icon">🔥</div>
+    <div class="card-label">Hashrate</div>
+    <div class="card-value green" id="hashrate"><div class="skel"></div></div>
+    <div class="card-sub">EH/s · red global</div>
+    <div class="hr-bars" id="hrBars"></div>
+  </div>
+
+  <div class="card wide" onclick="openModal('fees')">
+    <div class="card-icon">⚡</div>
+    <div class="card-label">Comisiones recomendadas (sat/vByte)</div>
+    <div id="feesArea"><div class="skel"></div></div>
+  </div>
+
+  <div class="card wide" onclick="openModal('mempool')">
+    <div class="card-icon">🌊</div>
+    <div class="card-label">Mempool · próximos bloques</div>
+    <div id="mempoolArea"><div class="skel"></div></div>
+  </div>
+
+  <div class="card" onclick="openModal('supply')">
+    <div class="card-icon">🏦</div>
+    <div class="card-label">Supply en circulación</div>
+    <div class="card-value" id="supply"><div class="skel"></div></div>
+    <div class="prog-wrap"><div class="prog-bar" id="supplyBar" style="width:0%"></div></div>
+    <div class="card-sub" id="supplyPct">de 21,000,000 BTC</div>
+  </div>
+
+  <div class="card" onclick="openModal('halving')">
+    <div class="card-icon">✂️</div>
+    <div class="card-label">Próximo halving</div>
+    <div class="card-value yellow" id="halvingBlocks"><div class="skel"></div></div>
+    <div class="card-sub" id="halvingDate">–</div>
+    <div class="card-sub" id="halvingReward">–</div>
+  </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <span class="modal-close" onclick="closeModal()">✕</span>
+    <h2 id="modalTitle"></h2>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let state = {};
+let sparkData = [];
+
+const fmt = (n,d=0) => n == null ? '–' : n.toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtBTC = n => (n/1e8).toFixed(8);
+
+function blockFillColor(pct) {
+  const r = Math.round(80+pct*175), g = Math.round(147-pct*120), b = Math.round(26-pct*20);
+  return `rgba(${r},${g},${b},0.85)`;
+}
+
+// ---- FETCH ----
+async function fetchAll() {
+  const [fees, diff, mblocks, hr, prices, height, blocks] = await Promise.allSettled([
+    fetch(`${API}/v1/fees/recommended`).then(r=>r.json()),
+    fetch(`${API}/v1/difficulty-adjustment`).then(r=>r.json()),
+    fetch(`${API}/v1/fees/mempool-blocks`).then(r=>r.json()),
+    fetch(`${API}/v1/mining/hashrate/3d`).then(r=>r.json()),
+    fetch(`${API}/v1/prices`).then(r=>r.json()),
+    fetch(`${API}/blocks/tip/height`).then(r=>r.json()),
+    fetch(`${API}/blocks`).then(r=>r.json()),
+  ]);
+
+  if(fees.status==='fulfilled') { state.fees=fees.value; renderFees(); }
+  if(diff.status==='fulfilled') { state.diff=diff.value; renderDiff(); }
+  if(mblocks.status==='fulfilled') { state.mblocks=mblocks.value; renderMempool(); }
+  if(hr.status==='fulfilled') { state.hr=hr.value; renderHashrate(); }
+  if(prices.status==='fulfilled') { state.prices=prices.value; renderPrice(); }
+  if(height.status==='fulfilled' && blocks.status==='fulfilled') {
+    state.height=height.value; state.blocks=blocks.value; renderBlock();
+  }
+
+  updateTimestamp();
+}
+
+// ---- RENDER ----
+function renderPrice() {
+  const p = state.prices;
+  document.getElementById('price').textContent = '$'+fmt(p.USD);
+  document.getElementById('priceSub').textContent = `€${fmt(p.EUR)} · £${fmt(p.GBP)}`;
+  sparkData.push(p.USD);
+  if(sparkData.length>40) sparkData.shift();
+  drawSparkline();
+  if(sparkData.length>=2){
+    const pct=((sparkData[sparkData.length-1]-sparkData[0])/sparkData[0]*100).toFixed(2);
+    const up=pct>=0;
+    document.getElementById('priceTag').innerHTML=`<span class="tag ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(pct)}% sesión</span>`;
+  }
+}
+
+function drawSparkline() {
+  const c=document.getElementById('sparkline'), ctx=c.getContext('2d');
+  const W=c.offsetWidth, H=50;
+  c.width=W*devicePixelRatio; c.height=H*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  ctx.clearRect(0,0,W,H);
+  if(sparkData.length<2) return;
+  const mn=Math.min(...sparkData), mx=Math.max(...sparkData), rng=mx-mn||1;
+  const pts=sparkData.map((v,i)=>({x:(i/(sparkData.length-1))*W, y:H-((v-mn)/rng)*(H-6)-3}));
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'rgba(247,147,26,0.25)'); g.addColorStop(1,'rgba(247,147,26,0)');
+  ctx.beginPath(); ctx.moveTo(pts[0].x,H);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H); ctx.closePath();
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle='#f7931a'; ctx.lineWidth=2; ctx.stroke();
+}
+
+function renderBlock() {
+  const h=state.height, b=state.blocks;
+  document.getElementById('blockHeight').textContent=fmt(h);
+  if(b&&b[0]){
+    const ago=Math.round((Date.now()/1000-b[0].timestamp)/60);
+    document.getElementById('blockTime').textContent=`Último hace ${ago} min`;
+    document.getElementById('blockSize').textContent=`${(b[0].size/1e3).toFixed(1)} kB · ${fmt(b[0].tx_count)} txs`;
+  }
+  // Halving
+  const HALV=210000, next=Math.ceil(h/HALV)*HALV, left=next-h;
+  const halvDate=new Date(Date.now()+left*10*60*1000);
+  document.getElementById('halvingBlocks').textContent=fmt(left)+' bloques';
+  document.getElementById('halvingDate').textContent='~'+halvDate.toLocaleDateString('es-ES',{year:'numeric',month:'long'});
+  const halvNum=Math.floor(h/HALV);
+  const reward=50/Math.pow(2,halvNum), nextReward=50/Math.pow(2,halvNum+1);
+  document.getElementById('halvingReward').textContent=`Recompensa: ${reward} → ${nextReward} BTC`;
+  // Supply
+  let supply=0;
+  for(let i=0;i<halvNum;i++) supply+=210000*(50/Math.pow(2,i));
+  supply+=(h%HALV)*(50/Math.pow(2,halvNum));
+  const pct=(supply/21000000*100).toFixed(3);
+  document.getElementById('supply').textContent=fmt(supply)+' BTC';
+  document.getElementById('supplyBar').style.width=pct+'%';
+  document.getElementById('supplyPct').textContent=`${pct}% de 21,000,000`;
+  state.halvNum=halvNum; state.reward=reward; state.supply=supply; state.halvLeft=left; state.halvDate=halvDate;
+}
+
+function renderDiff() {
+  const d=state.diff;
+  const sign=d.difficultyChange>=0?'+':'';
+  const col=d.difficultyChange>=0?'green':'red';
+  document.getElementById('difficulty').innerHTML=`<span class="${col}">${sign}${d.difficultyChange.toFixed(2)}%</span>`;
+  document.getElementById('diffSub').textContent=`Próximo ajuste en ${d.remainingBlocks} bloques`;
+  document.getElementById('diffProg').style.width=d.progressPercent+'%';
+  document.getElementById('diffPct').textContent=`${d.progressPercent.toFixed(1)}% del periodo actual`;
+}
+
+function renderHashrate() {
+  const hr=state.hr;
+  const ehS=(hr.currentHashrate/1e18).toFixed(1);
+  document.getElementById('hashrate').textContent=ehS;
+  // Mini bars from last 3 days
+  const bars=hr.hashrates.slice(-7);
+  const mx=Math.max(...bars.map(b=>b.avgHashrate));
+  document.getElementById('hrBars').innerHTML=bars.map(b=>{
+    const h=Math.max(8,(b.avgHashrate/mx)*40);
+    return `<div class="hr-bar" style="height:${h}px" title="${(b.avgHashrate/1e18).toFixed(1)} EH/s · ${new Date(b.timestamp*1000).toLocaleDateString('es-ES')}"></div>`;
+  }).join('');
+}
+
+function renderFees() {
+  const f=state.fees;
+  const fees=[
+    {label:'Inmediato',val:f.fastestFee,cls:'f1'},
+    {label:'~10 min',val:Math.round((f.fastestFee+f.halfHourFee)/2),cls:'f2'},
+    {label:'~30 min',val:f.halfHourFee,cls:'f3'},
+    {label:'~1h',val:f.hourFee,cls:'f4'},
+    {label:'Eco',val:f.economyFee,cls:'f5'},
+  ];
+  const mx=Math.max(...fees.map(x=>x.val));
+  document.getElementById('feesArea').innerHTML=`
+    <div class="fee-bars">
+      ${fees.map(x=>{
+        const h=Math.max(10,(x.val/mx)*100);
+        return `<div class="fee-bar-wrap">
+          <div class="fee-val">${x.val}</div>
+          <div class="fee-bar ${x.cls}" style="height:${h}%"></div>
+          <div class="fee-label">${x.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card-sub" style="margin-top:8px">sat/vByte · Mínimo: ${f.minimumFee} · <span class="${f.fastestFee<=2?'green':f.fastestFee<=10?'yellow':'red'}">${f.fastestFee<=2?'Mempool casi vacío ✓':f.fastestFee<=10?'Fees bajas':'Fees altas'}</span></div>
+  `;
+}
+
+function renderMempool() {
+  const blocks=state.mblocks;
+  const totalTxs=blocks.reduce((a,b)=>a+b.nTx,0);
+  const totalMB=(blocks.reduce((a,b)=>a+b.blockSize,0)/1e6).toFixed(2);
+  document.getElementById('mempoolArea').innerHTML=`
+    <div class="mblocks">
+      ${blocks.map((b,i)=>{
+        const fill=Math.min(1,b.blockSize/(1.5e6));
+        const bg=blockFillColor(fill);
+        const med=b.medianFee?b.medianFee.toFixed(1):'~1';
+        return `<div class="mblock" style="background:${bg}" title="${fmt(b.nTx)} txs · ${(b.blockSize/1e3).toFixed(0)}kB · med ${med} s/vB">
+          <div class="bn">B+${i+1}</div>
+          <div class="bs">${(b.blockSize/1e3).toFixed(0)}kB</div>
+          <div class="bf">${med} s/vB</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card-sub" style="margin-top:8px">${fmt(totalTxs)} txs pendientes · ${totalMB} MB en cola · ${blocks.length} bloques</div>
+  `;
+}
+
+// ---- MODALS ----
+const modalDefs = {
+  price: () => {
+    const p=state.prices||{};
+    return {
+      title:'💰 Precio Bitcoin',
+      html:`<table>
+        <tr><td>USD</td><td>$${fmt(p.USD)}</td></tr>
+        <tr><td>EUR</td><td>€${fmt(p.EUR)}</td></tr>
+        <tr><td>GBP</td><td>£${fmt(p.GBP)}</td></tr>
+        <tr><td>CHF</td><td>${fmt(p.CHF)}</td></tr>
+        <tr><td>CAD</td><td>${fmt(p.CAD)}</td></tr>
+        <tr><td>AUD</td><td>${fmt(p.AUD)}</td></tr>
+        <tr><td>JPY</td><td>¥${fmt(p.JPY)}</td></tr>
+        <tr><td>Fuente</td><td class="muted">mempool local</td></tr>
+      </table>`
+    };
+  },
+  block: () => {
+    const b=state.blocks&&state.blocks[0]||{};
+    return {
+      title:'📦 Último bloque',
+      html:`<table>
+        <tr><td>Altura</td><td>${fmt(state.height)}</td></tr>
+        <tr><td>Hash</td><td style="font-size:0.6rem;word-break:break-all">${b.id||'–'}</td></tr>
+        <tr><td>Timestamp</td><td>${b.timestamp?new Date(b.timestamp*1000).toLocaleString('es-ES'):'–'}</td></tr>
+        <tr><td>Tamaño</td><td>${b.size?(b.size/1e3).toFixed(1)+' kB':'–'}</td></tr>
+        <tr><td>Peso</td><td>${b.weight?(b.weight/1e3).toFixed(1)+' kWU':'–'}</td></tr>
+        <tr><td>Transacciones</td><td>${fmt(b.tx_count)}</td></tr>
+        <tr><td>Dificultad</td><td>${b.difficulty?b.difficulty.toExponential(3):'–'}</td></tr>
+        <tr><td>Merkle root</td><td style="font-size:0.6rem;word-break:break-all">${b.merkle_root||'–'}</td></tr>
+        <tr><td>Minero</td><td>${b.extras&&b.extras.pool?b.extras.pool.name:'Desconocido'}</td></tr>
+        <tr><td>Recompensa</td><td>${b.extras&&b.extras.reward?`${(b.extras.reward/1e8).toFixed(4)} BTC`:'–'}</td></tr>
+      </table>`
+    };
+  },
+  difficulty: () => {
+    const d=state.diff||{};
+    return {
+      title:'⛏️ Dificultad y ajuste',
+      html:`<table>
+        <tr><td>Cambio estimado</td><td class="${d.difficultyChange>=0?'green':'red'}">${d.difficultyChange>=0?'+':''}${d.difficultyChange?d.difficultyChange.toFixed(4)+'%':'–'}</td></tr>
+        <tr><td>Retarget anterior</td><td class="${d.previousRetarget>=0?'green':'red'}">${d.previousRetarget>=0?'+':''}${d.previousRetarget?d.previousRetarget.toFixed(4)+'%':'–'}</td></tr>
+        <tr><td>Bloques restantes</td><td>${fmt(d.remainingBlocks)}</td></tr>
+        <tr><td>Próximo retarget</td><td>#${fmt(d.nextRetargetHeight)}</td></tr>
+        <tr><td>Fecha estimada</td><td>${d.estimatedRetargetDate?new Date(d.estimatedRetargetDate).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'–'}</td></tr>
+        <tr><td>Progreso periodo</td><td>${d.progressPercent?d.progressPercent.toFixed(2)+'%':'–'}</td></tr>
+        <tr><td>Tiempo medio bloque</td><td>${d.timeAvg?Math.round(d.timeAvg/60)+' min '+Math.round((d.timeAvg%60))+' s':'–'}</td></tr>
+        <tr><td>Bloques esperados</td><td>${d.expectedBlocks?d.expectedBlocks.toFixed(0):'–'}</td></tr>
+        <tr><td>Dificultad actual</td><td>${d.currentDifficulty?(d.currentDifficulty/1e12).toFixed(2)+' T':'–'}</td></tr>
+      </table>`
+    };
+  },
+  hashrate: () => {
+    const hr=state.hr||{};
+    const ehS=(hr.currentHashrate/1e18).toFixed(2);
+    return {
+      title:'🔥 Hashrate de la red',
+      html:`<table>
+        <tr><td>Hashrate actual</td><td class="green">${ehS} EH/s</td></tr>
+        <tr><td>En H/s</td><td style="font-size:0.7rem">${hr.currentHashrate?hr.currentHashrate.toExponential(4):'–'}</td></tr>
+        <tr><td>Dificultad</td><td>${hr.currentDifficulty?(hr.currentDifficulty/1e12).toFixed(2)+' T':'–'}</td></tr>
+      </table>
+      <div style="margin-top:16px;font-size:0.75rem;color:#444">Últimos días:</div>
+      <div class="hr-bars" style="height:60px;margin-top:8px">
+        ${(hr.hashrates||[]).map(b=>{
+          const mx=Math.max(...(hr.hashrates||[]).map(x=>x.avgHashrate));
+          const h=Math.max(8,(b.avgHashrate/mx)*60);
+          return `<div class="hr-bar" style="height:${h}px;flex:1" title="${(b.avgHashrate/1e18).toFixed(2)} EH/s · ${new Date(b.timestamp*1000).toLocaleDateString('es-ES')}"></div>`;
+        }).join('')}
+      </div>`
+    };
+  },
+  fees: () => {
+    const f=state.fees||{};
+    return {
+      title:'⚡ Comisiones',
+      html:`<table>
+        <tr><td>Inmediato (próximo bloque)</td><td class="orange">${f.fastestFee} sat/vB</td></tr>
+        <tr><td>~30 minutos</td><td class="yellow">${f.halfHourFee} sat/vB</td></tr>
+        <tr><td>~1 hora</td><td class="green">${f.hourFee} sat/vB</td></tr>
+        <tr><td>Económico</td><td class="blue">${f.economyFee} sat/vB</td></tr>
+        <tr><td>Mínimo absoluto</td><td>${f.minimumFee} sat/vB</td></tr>
+      </table>
+      <div style="margin-top:16px;padding:12px;background:#1a1a2e;border-radius:10px;font-size:0.8rem">
+        <div style="color:#444;margin-bottom:8px;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase">Estimación de coste</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>Tx estándar (141 vB)<br><span style="color:#f7931a;font-weight:700">${(f.fastestFee*141)} sats</span> rápido</div>
+          <div>Tx SegWit (103 vB)<br><span style="color:#4caf82;font-weight:700">${(f.economyFee*103)} sats</span> eco</div>
+        </div>
+      </div>`
+    };
+  },
+  mempool: () => {
+    const blocks=state.mblocks||[];
+    const totalTxs=blocks.reduce((a,b)=>a+b.nTx,0);
+    return {
+      title:'🌊 Mempool detalle',
+      html:`<table style="margin-bottom:12px">
+        <tr><td>Bloques en espera</td><td>${blocks.length}</td></tr>
+        <tr><td>Txs pendientes</td><td>${fmt(totalTxs)}</td></tr>
+        <tr><td>Tamaño total</td><td>${(blocks.reduce((a,b)=>a+b.blockSize,0)/1e6).toFixed(2)} MB</td></tr>
+      </table>
+      ${blocks.map((b,i)=>`
+        <div style="background:#0f0f1a;border:1px solid #1a1a2e;border-radius:8px;padding:10px;margin-bottom:6px;font-size:0.78rem">
+          <div style="font-weight:700;color:#f7931a;margin-bottom:4px">Bloque +${i+1}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:#888">
+            <div>Txs: <span style="color:#ccc">${fmt(b.nTx)}</span></div>
+            <div>Tamaño: <span style="color:#ccc">${(b.blockSize/1e3).toFixed(0)} kB</span></div>
+            <div>Fee media: <span style="color:#ccc">${b.medianFee?b.medianFee.toFixed(1):'~1'} s/vB</span></div>
+            <div>Fee mín: <span style="color:#ccc">${b.minFee||1} s/vB</span></div>
+          </div>
+        </div>`).join('')}`
+    };
+  },
+  supply: () => {
+    const h=state.height||0, s=state.supply||0;
+    return {
+      title:'🏦 Supply Bitcoin',
+      html:`<table>
+        <tr><td>En circulación</td><td class="orange">${fmt(s)} BTC</td></tr>
+        <tr><td>% minado</td><td>${(s/21000000*100).toFixed(4)}%</td></tr>
+        <tr><td>BTC restante</td><td>${fmt(21000000-s)} BTC</td></tr>
+        <tr><td>Halving actual</td><td>#${state.halvNum||0} (${state.reward||0} BTC/bloque)</td></tr>
+        <tr><td>Máximo teórico</td><td>20,999,999.97 BTC</td></tr>
+        <tr><td>BTC perdidos (est.)</td><td class="muted">~3,700,000 BTC</td></tr>
+        <tr><td>Supply efectivo</td><td class="green">~${fmt((s-3700000))} BTC</td></tr>
+      </table>`
+    };
+  },
+  halving: () => {
+    const left=state.halvLeft||0;
+    return {
+      title:'✂️ Próximo halving',
+      html:`<table>
+        <tr><td>Bloques restantes</td><td class="yellow">${fmt(left)}</td></tr>
+        <tr><td>Altura del halving</td><td>#${fmt(state.height+(left||0))}</td></tr>
+        <tr><td>Fecha estimada</td><td>${state.halvDate?state.halvDate.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'–'}</td></tr>
+        <tr><td>Tiempo estimado</td><td>${left?Math.round(left*10/60/24)+' días aprox.':'–'}</td></tr>
+        <tr><td>Recompensa actual</td><td>${state.reward||0} BTC/bloque</td></tr>
+        <tr><td>Recompensa tras halving</td><td>${state.reward?state.reward/2:0} BTC/bloque</td></tr>
+        <tr><td>Halvings ocurridos</td><td>${state.halvNum||0}</td></tr>
+        <tr><td>Reducción acumulada</td><td>${state.halvNum?((1-1/Math.pow(2,state.halvNum||0))*100).toFixed(2)+'%':'–'}</td></tr>
+      </table>`
+    };
+  }
+};
+
+function openModal(key) {
+  const def=modalDefs[key]&&modalDefs[key]();
+  if(!def) return;
+  document.getElementById('modalTitle').textContent=def.title;
+  document.getElementById('modalContent').innerHTML=def.html;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e) {
+  if(!e||e.target===document.getElementById('modal')||e.currentTarget.classList.contains('modal-close'))
+    document.getElementById('modal').classList.remove('open');
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('modal').classList.remove('open'); });
+
+function updateTimestamp() {
+  document.getElementById('lastUpdated').textContent='Actualizado: '+new Date().toLocaleTimeString('es-ES');
+}
+
+// Initial + auto refresh
+fetchAll();
+setInterval(()=>{ fetch(`${API}/v1/prices`).then(r=>r.json()).then(d=>{ state.prices=d; renderPrice(); updateTimestamp(); }); }, 30000);
+setInterval(fetchAll, 60000);
+</script>
+</body>
+</html>

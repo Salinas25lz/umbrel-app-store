@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  web:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "8765:80"
+    volumes:
+      - ${APP_DATA_DIR}/html:/usr/share/nginx/html:ro
+    networks:
+      - default
+
+networks:
+  default:
+    name: umbrel_main_network
+    external: true
