@@ -8,6 +8,7 @@ services:
       - "8765:80"
     volumes:
       - ${APP_DATA_DIR}/html:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - default
 

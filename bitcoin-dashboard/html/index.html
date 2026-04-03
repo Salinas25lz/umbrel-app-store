@@ -1,173 +1,328 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>₿ Bitcoin Dashboard</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',system-ui,sans-serif; background:#07070f; color:#e0e0e0; min-height:100vh; padding:20px; }
+:root {
+  --bg:#07070f; --card-bg:linear-gradient(145deg,#0f0f1a,#0b0b14); --card-border:#1a1a2e;
+  --text:#ffffff; --text-sub:#cccccc; --text-label:#aaaaaa; --text-muted:#888888;
+  --modal-bg:#0f0f1a; --modal-border:#1e1e2e; --prog-bg:#1a1a2e;
+  --skel1:#1a1a2e; --skel2:#222235; --header-sub:#aaaaaa; --updated:#888888;
+  --fee-label:#cccccc; --fee-val:#ffffff; --inner-bg:#1a1a2e; --inner-color:#cccccc;
+  --toggle-bg:#1a1a2e; --toggle-color:#cccccc; --section-label:#44445a;
+}
+[data-theme="light"] {
+  --bg:#f0f2f5; --card-bg:linear-gradient(145deg,#ffffff,#f8f9fb); --card-border:#dde1ea;
+  --text:#0a0a14; --text-sub:#333344; --text-label:#555566; --text-muted:#777788;
+  --modal-bg:#ffffff; --modal-border:#dde1ea; --prog-bg:#dde1ea;
+  --skel1:#e8eaf0; --skel2:#f0f2f5; --header-sub:#555566; --updated:#777788;
+  --fee-label:#444455; --fee-val:#0a0a14; --inner-bg:#e8eaf0; --inner-color:#333344;
+  --toggle-bg:#dde1ea; --toggle-color:#333344; --section-label:#9999bb;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px;transition:background .3s,color .3s}
 
-.header { text-align:center; padding:24px 0 16px; }
-.header h1 { font-size:2.2rem; font-weight:800; background:linear-gradient(135deg,#f7931a,#ffcc00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-1px; }
-.header .sub { color:#444; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; margin-top:5px; }
-.header .sub .dot { display:inline-block; width:7px; height:7px; background:#4caf82; border-radius:50%; margin-right:5px; animation:pulse 2s infinite; }
-#lastUpdated { color:#333; font-size:0.7rem; margin-top:6px; }
+/* Header */
+.header{text-align:center;padding:24px 0 16px;position:relative}
+.header h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#f7931a,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px}
+.header .sub{color:var(--header-sub);font-size:.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:5px}
+.header .sub .dot{display:inline-block;width:7px;height:7px;background:#4caf82;border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+#lastUpdated{color:var(--updated);font-size:.7rem;margin-top:6px}
+.controls{position:absolute;top:24px;right:0;display:flex;gap:8px}
+.ctrl-btn{background:var(--toggle-bg);color:var(--toggle-color);border:1px solid var(--card-border);border-radius:20px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:1px}
+.ctrl-btn:hover{border-color:#f7931a88;color:#f7931a}
+@media(max-width:600px){.controls{position:static;justify-content:center;margin-top:10px}}
 
-.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; max-width:1400px; margin:24px auto; }
-.card { background:linear-gradient(145deg,#0f0f1a,#0b0b14); border:1px solid #1a1a2e; border-radius:14px; padding:20px; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s; }
-.card:hover { transform:translateY(-3px); border-color:#f7931a55; box-shadow:0 8px 30px #f7931a11; }
-.card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#f7931a88,transparent); }
-.card.wide { grid-column:span 2; }
-@media(max-width:680px){ .card.wide{ grid-column:span 1; } }
+/* Sections */
+.section{max-width:1400px;margin:0 auto 32px}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #ffffff08}
+.section-bar{width:18px;height:2px;background:linear-gradient(90deg,#f7931a,transparent);border-radius:1px}
+.section-bar.blue{background:linear-gradient(90deg,#5b9bd5,transparent)}
+.section-bar.purple{background:linear-gradient(90deg,#a855f7,transparent)}
+.section-bar.green{background:linear-gradient(90deg,#4caf82,transparent)}
+.section-label{font-size:.58rem;text-transform:uppercase;letter-spacing:3px;color:var(--section-label);font-weight:700}
 
-.card-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:#444; margin-bottom:8px; }
-.card-value { font-size:1.9rem; font-weight:700; line-height:1.1; }
-.card-sub { font-size:0.75rem; color:#444; margin-top:6px; }
-.card-icon { position:absolute; top:16px; right:16px; font-size:1.6rem; opacity:0.12; }
-.tag { display:inline-block; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:600; margin-top:6px; }
-.tag.up { background:#4caf8222; color:#4caf82; }
-.tag.down { background:#ef476f22; color:#ef476f; }
-.tag.neutral { background:#5b9bd522; color:#5b9bd5; }
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+
+/* Cards */
+.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:20px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);border-color:#f7931a55;box-shadow:0 8px 30px #f7931a11}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#f7931a88,transparent)}
+.card.blue::before{background:linear-gradient(90deg,transparent,#5b9bd588,transparent)}
+.card.purple::before{background:linear-gradient(90deg,transparent,#a855f788,transparent)}
+.card.green::before{background:linear-gradient(90deg,transparent,#4caf8288,transparent)}
+.card.span2{grid-column:span 2}
+.card.span3{grid-column:1/-1}
+@media(max-width:900px){.card.span2{grid-column:span 1}.card.span3{grid-column:1/-1}}
+@media(max-width:560px){.card.span2,.card.span3{grid-column:span 1}}
+
+.card-label{font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-label);margin-bottom:8px}
+.card-value{font-size:1.9rem;font-weight:700;line-height:1.1;color:var(--text)}
+.card-sub{font-size:.75rem;color:var(--text-sub);margin-top:6px}
+.card-icon{position:absolute;top:16px;right:16px;font-size:1.6rem;opacity:.12}
+.card-badge{position:absolute;top:16px;right:16px;font-size:.5rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;background:var(--inner-bg);padding:2px 6px;border-radius:4px}
+
+/* Tags */
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:600;margin-top:6px}
+.tag.up    {background:#4caf8222;color:#4caf82}
+.tag.down  {background:#ef476f22;color:#ef476f}
+.tag.neutral{background:#5b9bd522;color:#5b9bd5}
+.tag.free  {background:#4caf8222;color:#4caf82}
+.tag.mid   {background:#ffd16622;color:#c8960a}
+.tag.busy  {background:#ef476f22;color:#ef476f}
+.tag.purple{background:#a855f722;color:#a855f7}
 
 /* Colors */
-.orange { color:#f7931a; }
-.green { color:#4caf82; }
-.blue { color:#5b9bd5; }
-.yellow { color:#ffd166; }
-.red { color:#ef476f; }
-.muted { color:#555; }
+.orange{color:#f7931a}.green{color:#4caf82}.blue{color:#5b9bd5}
+.yellow{color:#c8960a}.red{color:#ef476f}.purple{color:#a855f7}.muted{color:var(--text-muted)}
 
 /* Fees */
-.fee-bars { display:flex; gap:8px; margin-top:14px; align-items:flex-end; height:70px; }
-.fee-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
-.fee-bar { width:100%; border-radius:5px 5px 0 0; transition:height 0.8s cubic-bezier(0.4,0,0.2,1); min-height:3px; }
-.fee-bar.f1 { background:linear-gradient(180deg,#ef476f,#c0392b); }
-.fee-bar.f2 { background:linear-gradient(180deg,#ff9f43,#e67e22); }
-.fee-bar.f3 { background:linear-gradient(180deg,#ffd166,#f39c12); }
-.fee-bar.f4 { background:linear-gradient(180deg,#4caf82,#27ae60); }
-.fee-bar.f5 { background:linear-gradient(180deg,#5b9bd5,#2980b9); }
-.fee-label { font-size:0.55rem; color:#444; text-transform:uppercase; letter-spacing:1px; text-align:center; }
-.fee-val { font-size:0.8rem; font-weight:700; color:#ccc; }
+.fee-bars{display:flex;gap:8px;margin-top:14px;align-items:flex-end;height:70px}
+.fee-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.fee-bar{width:100%;border-radius:5px 5px 0 0;transition:height .8s cubic-bezier(.4,0,.2,1);min-height:3px}
+.fee-bar.f1{background:linear-gradient(180deg,#ef476f,#c0392b)}
+.fee-bar.f2{background:linear-gradient(180deg,#ff9f43,#e67e22)}
+.fee-bar.f3{background:linear-gradient(180deg,#ffd166,#f39c12)}
+.fee-bar.f4{background:linear-gradient(180deg,#4caf82,#27ae60)}
+.fee-bar.f5{background:linear-gradient(180deg,#5b9bd5,#2980b9)}
+.fee-label{font-size:.55rem;color:var(--fee-label);text-transform:uppercase;letter-spacing:1px;text-align:center}
+.fee-val{font-size:.8rem;font-weight:700;color:var(--fee-val)}
 
 /* Mempool blocks */
-.mblocks { display:flex; gap:6px; margin-top:14px; overflow-x:auto; padding-bottom:4px; flex-wrap:nowrap; }
-.mblock { flex-shrink:0; width:64px; height:64px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:0.6rem; text-align:center; border:1px solid #ffffff11; cursor:default; transition:transform 0.15s; }
-.mblock:hover { transform:scale(1.08); }
-.mblock .bn { font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.9); }
-.mblock .bs { font-size:0.55rem; color:rgba(255,255,255,0.6); margin-top:1px; }
-.mblock .bf { font-size:0.55rem; color:rgba(255,255,255,0.75); }
+.mblocks{display:flex;gap:6px;margin-top:14px;overflow-x:auto;padding-bottom:4px}
+.mblock{flex-shrink:0;width:72px;height:72px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px solid #ffffff11;cursor:default;transition:transform .15s}
+.mblock:hover{transform:scale(1.08)}
+.mblock .bn{font-size:.58rem;font-weight:700;color:#fff}
+.mblock .bs{font-size:.55rem;color:rgba(255,255,255,.9);margin-top:1px}
+.mblock .bf{font-size:.55rem;color:#fff;font-weight:600}
 
 /* Progress */
-.prog-wrap { margin-top:12px; background:#1a1a2e; border-radius:99px; height:6px; overflow:hidden; }
-.prog-bar { height:100%; border-radius:99px; background:linear-gradient(90deg,#f7931a,#ffcc00); transition:width 1s ease; }
+.prog-wrap{margin-top:12px;background:var(--prog-bg);border-radius:99px;height:6px;overflow:hidden}
+.prog-bar{height:100%;border-radius:99px;background:linear-gradient(90deg,#f7931a,#ffcc00);transition:width 1s ease}
+.prog-bar.purple{background:linear-gradient(90deg,#a855f7,#7c3aed)}
+.prog-bar.green{background:linear-gradient(90deg,#4caf82,#27ae60)}
 
 /* Sparkline */
-canvas#sparkline { width:100%; height:50px; margin-top:10px; opacity:0.85; }
+canvas#sparkline{width:100%;height:50px;margin-top:10px;opacity:.85}
 
-/* Hashrate mini chart */
-.hr-bars { display:flex; gap:4px; align-items:flex-end; height:40px; margin-top:12px; }
-.hr-bar { flex:1; border-radius:3px 3px 0 0; background:linear-gradient(180deg,#4caf82,#27ae60); min-height:2px; transition:height 0.6s; }
+/* Hashrate bars */
+.hr-bars{display:flex;gap:4px;align-items:flex-end;height:40px;margin-top:12px}
+.hr-bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#4caf82,#27ae60);min-height:2px;transition:height .6s}
+
+/* Dominance donut (simple) */
+.dom-ring{position:relative;width:80px;height:80px;margin:14px auto 0;flex-shrink:0}
+.dom-ring svg{transform:rotate(-90deg)}
+.dom-ring-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#f7931a}
+
+/* LN stat rows */
+.ln-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #ffffff07}
+.ln-row:last-child{border:none}
+.ln-row-label{font-size:.68rem;color:var(--text-label)}
+.ln-row-val{font-size:.82rem;font-weight:700;color:var(--text)}
 
 /* Skeleton */
-.skel { background:linear-gradient(90deg,#1a1a2e 25%,#222235 50%,#1a1a2e 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:6px; height:1.9rem; width:75%; }
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+.skel{background:linear-gradient(90deg,var(--skel1) 25%,var(--skel2) 50%,var(--skel1) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:1.9rem;width:75%}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 
 /* Modal */
-.modal-bg { display:none; position:fixed; inset:0; background:#000000cc; z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-.modal-bg.open { display:flex; }
-.modal { background:#0f0f1a; border:1px solid #1e1e2e; border-radius:18px; padding:28px; max-width:520px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
-.modal h2 { font-size:1.2rem; font-weight:700; margin-bottom:18px; color:#f7931a; }
-.modal-close { position:absolute; top:16px; right:18px; font-size:1.2rem; cursor:pointer; color:#444; transition:color 0.2s; }
-.modal-close:hover { color:#fff; }
-.modal table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-.modal table tr { border-bottom:1px solid #1a1a2e; }
-.modal table tr:last-child { border:none; }
-.modal table td { padding:8px 4px; }
-.modal table td:first-child { color:#555; width:55%; }
-.modal table td:last-child { color:#e0e0e0; font-weight:600; text-align:right; }
-
-.diff-ring { position:relative; width:90px; height:90px; margin:0 auto 16px; }
-.diff-ring svg { transform:rotate(-90deg); }
-.diff-ring .center-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; }
+.modal-bg{display:none;position:fixed;inset:0;background:#000000cc;z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--modal-bg);border:1px solid var(--modal-border);border-radius:18px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;position:relative}
+.modal h2{font-size:1.2rem;font-weight:700;margin-bottom:18px;color:#f7931a}
+.modal-close{position:absolute;top:16px;right:18px;font-size:1.2rem;cursor:pointer;color:var(--text-muted);transition:color .2s}
+.modal-close:hover{color:var(--text)}
+.modal table{width:100%;border-collapse:collapse;font-size:.82rem}
+.modal table tr{border-bottom:1px solid var(--card-border)}
+.modal table tr:last-child{border:none}
+.modal table td{padding:8px 4px}
+.modal table td:first-child{color:var(--text-sub);width:55%}
+.modal table td:last-child{color:var(--text);font-weight:600;text-align:right}
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>₿ Bitcoin Dashboard</h1>
-  <div class="sub"><span class="dot"></span>Live · tu nodo · 100% local</div>
-  <div id="lastUpdated">Cargando...</div>
+  <div class="sub"><span class="dot"></span><span id="lbl-live">Live · tu nodo · 100% local</span></div>
+  <div id="lastUpdated"></div>
+  <div class="controls">
+    <button class="ctrl-btn" onclick="toggleLang()" id="langBtn">EN</button>
+    <button class="ctrl-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
+  </div>
 </div>
 
-<div class="grid">
-
-  <div class="card" onclick="openModal('price')">
-    <div class="card-icon">💰</div>
-    <div class="card-label">Precio BTC</div>
-    <div class="card-value orange" id="price"><div class="skel"></div></div>
-    <div id="priceTag"></div>
-    <canvas id="sparkline"></canvas>
-    <div class="card-sub" id="priceSub">–</div>
+<!-- ═══════════════════════════════════════════
+     SECCIÓN 1 — MERCADO
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-bar"></div>
+    <div class="section-label" data-i18n="sec-market">Mercado</div>
   </div>
+  <div class="grid">
 
-  <div class="card" onclick="openModal('block')">
-    <div class="card-icon">📦</div>
-    <div class="card-label">Bloque actual</div>
-    <div class="card-value blue" id="blockHeight"><div class="skel"></div></div>
-    <div class="card-sub" id="blockTime">–</div>
-    <div class="card-sub" id="blockSize">–</div>
+    <!-- Precio -->
+    <div class="card" onclick="openModal('price')">
+      <div class="card-icon">💰</div>
+      <div class="card-label" data-i18n="lbl-price">Precio BTC</div>
+      <div class="card-value orange" id="price"><div class="skel"></div></div>
+      <div class="card-sub" id="priceEur">–</div>
+      <div id="priceTag"></div>
+      <canvas id="sparkline"></canvas>
+    </div>
+
+    <!-- Dominancia -->
+    <div class="card" onclick="openModal('dominance')">
+      <div class="card-badge" id="domBadge">ext · coingecko</div>
+      <div class="card-label" data-i18n="lbl-dom">Dominancia BTC</div>
+      <div class="card-value orange" id="domValue"><div class="skel"></div></div>
+      <div class="card-sub" id="domSub">–</div>
+      <div id="domTag"></div>
+    </div>
+
+    <!-- Bloque actual -->
+    <div class="card blue" onclick="openModal('block')">
+      <div class="card-icon">📦</div>
+      <div class="card-label" data-i18n="lbl-block">Bloque actual</div>
+      <div class="card-value blue" id="blockHeight"><div class="skel"></div></div>
+      <div class="card-sub" id="blockTime">–</div>
+      <div class="card-sub" id="blockMiner">–</div>
+    </div>
+
   </div>
-
-  <div class="card" onclick="openModal('difficulty')">
-    <div class="card-icon">⛏️</div>
-    <div class="card-label">Dificultad · Ajuste</div>
-    <div class="card-value" id="difficulty"><div class="skel"></div></div>
-    <div class="card-sub" id="diffSub">–</div>
-    <div class="prog-wrap" style="margin-top:10px"><div class="prog-bar" id="diffProg" style="width:0%"></div></div>
-    <div class="card-sub" id="diffPct" style="margin-top:4px">–</div>
-  </div>
-
-  <div class="card" onclick="openModal('hashrate')">
-    <div class="card-icon">🔥</div>
-    <div class="card-label">Hashrate</div>
-    <div class="card-value green" id="hashrate"><div class="skel"></div></div>
-    <div class="card-sub">EH/s · red global</div>
-    <div class="hr-bars" id="hrBars"></div>
-  </div>
-
-  <div class="card wide" onclick="openModal('fees')">
-    <div class="card-icon">⚡</div>
-    <div class="card-label">Comisiones recomendadas (sat/vByte)</div>
-    <div id="feesArea"><div class="skel"></div></div>
-  </div>
-
-  <div class="card wide" onclick="openModal('mempool')">
-    <div class="card-icon">🌊</div>
-    <div class="card-label">Mempool · próximos bloques</div>
-    <div id="mempoolArea"><div class="skel"></div></div>
-  </div>
-
-  <div class="card" onclick="openModal('supply')">
-    <div class="card-icon">🏦</div>
-    <div class="card-label">Supply en circulación</div>
-    <div class="card-value" id="supply"><div class="skel"></div></div>
-    <div class="prog-wrap"><div class="prog-bar" id="supplyBar" style="width:0%"></div></div>
-    <div class="card-sub" id="supplyPct">de 21,000,000 BTC</div>
-  </div>
-
-  <div class="card" onclick="openModal('halving')">
-    <div class="card-icon">✂️</div>
-    <div class="card-label">Próximo halving</div>
-    <div class="card-value yellow" id="halvingBlocks"><div class="skel"></div></div>
-    <div class="card-sub" id="halvingDate">–</div>
-    <div class="card-sub" id="halvingReward">–</div>
-  </div>
-
 </div>
 
-<!-- MODALS -->
+<!-- ═══════════════════════════════════════════
+     SECCIÓN 2 — RED BITCOIN
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-bar blue"></div>
+    <div class="section-label" data-i18n="sec-net">Red Bitcoin</div>
+  </div>
+  <div class="grid">
+
+    <!-- Comisiones -->
+    <div class="card" onclick="openModal('fees')">
+      <div class="card-icon">⚡</div>
+      <div class="card-label" data-i18n="lbl-fees">Comisiones (sat/vByte)</div>
+      <div id="feesArea"><div class="skel"></div></div>
+    </div>
+
+    <!-- Mempool -->
+    <div class="card span2" onclick="openModal('mempool')">
+      <div class="card-icon">🌊</div>
+      <div class="card-label" data-i18n="lbl-mempool">Mempool · próximos bloques</div>
+      <div id="mempoolArea"><div class="skel"></div></div>
+    </div>
+
+    <!-- Hashrate -->
+    <div class="card green" onclick="openModal('hashrate')">
+      <div class="card-icon">🔥</div>
+      <div class="card-label" data-i18n="lbl-hash">Hashrate</div>
+      <div class="card-value green" id="hashrate"><div class="skel"></div></div>
+      <div class="card-sub" data-i18n="lbl-hash-sub">EH/s · red global</div>
+      <div class="hr-bars" id="hrBars"></div>
+    </div>
+
+    <!-- Dificultad -->
+    <div class="card span2" onclick="openModal('difficulty')">
+      <div class="card-icon">⛏️</div>
+      <div class="card-label" data-i18n="lbl-diff">Dificultad · Próximo ajuste</div>
+      <div class="card-value" id="difficulty"><div class="skel"></div></div>
+      <div class="card-sub" id="diffSub">–</div>
+      <div class="prog-wrap"><div class="prog-bar" id="diffProg" style="width:0%"></div></div>
+      <div class="card-sub" id="diffPct" style="margin-top:4px">–</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECCIÓN 3 — LIGHTNING NETWORK
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-bar purple"></div>
+    <div class="section-label" data-i18n="sec-ln">Lightning Network · estadísticas globales</div>
+  </div>
+  <div class="grid">
+
+    <!-- Nodos -->
+    <div class="card purple" onclick="openModal('ln')">
+      <div class="card-icon">🔗</div>
+      <div class="card-label" data-i18n="lbl-ln-nodes">Nodos activos</div>
+      <div class="card-value purple" id="lnNodes"><div class="skel"></div></div>
+      <div class="card-sub" id="lnNodesSub">–</div>
+    </div>
+
+    <!-- Capacidad -->
+    <div class="card purple" onclick="openModal('ln')">
+      <div class="card-icon">⚡</div>
+      <div class="card-label" data-i18n="lbl-ln-cap">Capacidad total</div>
+      <div class="card-value purple" id="lnCap"><div class="skel"></div></div>
+      <div class="card-sub" id="lnCapSub">–</div>
+    </div>
+
+    <!-- Canales y fees -->
+    <div class="card purple" onclick="openModal('ln')">
+      <div class="card-icon">📡</div>
+      <div class="card-label" data-i18n="lbl-ln-ch">Canales · fee mediano</div>
+      <div class="card-value purple" id="lnChannels"><div class="skel"></div></div>
+      <div class="card-sub" id="lnFeeSub">–</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SECCIÓN 4 — CICLO Y ECONOMÍA
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-bar green"></div>
+    <div class="section-label" data-i18n="sec-cycle">Ciclo y Economía</div>
+  </div>
+  <div class="grid">
+
+    <!-- Supply -->
+    <div class="card green" onclick="openModal('supply')">
+      <div class="card-icon">🏦</div>
+      <div class="card-label" data-i18n="lbl-supply">Supply en circulación</div>
+      <div class="card-value" id="supply"><div class="skel"></div></div>
+      <div class="prog-wrap"><div class="prog-bar green" id="supplyBar" style="width:0%"></div></div>
+      <div class="card-sub" id="supplyPct">de 21,000,000 BTC</div>
+    </div>
+
+    <!-- Halving -->
+    <div class="card green" onclick="openModal('halving')">
+      <div class="card-icon">✂️</div>
+      <div class="card-label" data-i18n="lbl-halving">Próximo halving</div>
+      <div class="card-value yellow" id="halvingBlocks"><div class="skel"></div></div>
+      <div class="card-sub" id="halvingDate">–</div>
+      <div class="card-sub" id="halvingReward">–</div>
+    </div>
+
+    <!-- Era actual -->
+    <div class="card green" onclick="openModal('supply')">
+      <div class="card-icon">🏅</div>
+      <div class="card-label" data-i18n="lbl-era">Era actual · subsidio</div>
+      <div class="card-value yellow" id="eraValue"><div class="skel"></div></div>
+      <div class="card-sub" id="eraSub">–</div>
+      <div class="prog-wrap" style="margin-top:12px"><div class="prog-bar purple" id="eraProg" style="width:0%"></div></div>
+      <div class="card-sub" id="eraProgSub" style="margin-top:4px">–</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
 <div class="modal-bg" id="modal" onclick="closeModal(event)">
   <div class="modal">
     <span class="modal-close" onclick="closeModal()">✕</span>
@@ -180,18 +335,129 @@ canvas#sparkline { width:100%; height:50px; margin-top:10px; opacity:0.85; }
 const API = '/api';
 let state = {};
 let sparkData = [];
+let lang  = localStorage.getItem('lang')  || 'es';
+let theme = localStorage.getItem('theme') || 'dark';
 
-const fmt = (n,d=0) => n == null ? '–' : n.toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d});
-const fmtBTC = n => (n/1e8).toFixed(8);
+document.documentElement.setAttribute('data-theme', theme);
+document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+document.getElementById('langBtn').textContent  = lang  === 'es'   ? 'EN' : 'ES';
 
-function blockFillColor(pct) {
-  const r = Math.round(80+pct*175), g = Math.round(147-pct*120), b = Math.round(26-pct*20);
-  return `rgba(${r},${g},${b},0.85)`;
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const i18n = {
+  es: {
+    'sec-market':'Mercado','sec-net':'Red Bitcoin','sec-ln':'Lightning Network · estadísticas globales','sec-cycle':'Ciclo y Economía',
+    'lbl-live':'Live · tu nodo · 100% local','lbl-price':'Precio BTC','lbl-dom':'Dominancia BTC',
+    'lbl-block':'Bloque actual','lbl-fees':'Comisiones (sat/vByte)','lbl-mempool':'Mempool · próximos bloques',
+    'lbl-hash':'Hashrate','lbl-hash-sub':'EH/s · red global','lbl-diff':'Dificultad · Próximo ajuste',
+    'lbl-ln-nodes':'Nodos activos','lbl-ln-cap':'Capacidad total','lbl-ln-ch':'Canales · fee mediano',
+    'lbl-supply':'Supply en circulación','lbl-halving':'Próximo halving','lbl-era':'Era actual · subsidio',
+    'updated':'Actualizado','blocks':'bloques','ago':'Hace','min':'min',
+    'miner-unk':'Minero desconocido','next-adj':'Próximo ajuste en','period':'del periodo actual',
+    'pending':'txs pendientes','in-queue':'MB en cola',
+    'free':'Mempool libre ✓','moderate':'Mempool moderada','busy':'Mempool congestionada',
+    'eco':'Económica','fast':'Rápida','immediate':'Inmediato','min-fee':'Mínimo',
+    'next-halv':'~{v} días aprox.','reward-curr':'Recompensa actual','reward-next':'Recompensa tras halving',
+    'of':'de','session':'sesión','source':'Fuente','local':'mempool local',
+    'modal-price':'💰 Precio Bitcoin','modal-dom':'📊 Dominancia BTC','modal-block':'📦 Último bloque',
+    'modal-diff':'⛏️ Dificultad y ajuste','modal-hash':'🔥 Hashrate de la red',
+    'modal-fees':'⚡ Comisiones','modal-mempool':'🌊 Mempool detalle',
+    'modal-supply':'🏦 Supply Bitcoin','modal-halving':'✂️ Próximo halving','modal-ln':'⚡ Lightning Network',
+    'est-cost':'Coste estimado (tx estándar 141 vB)',
+    'usd':'Precio USD','eur':'Precio EUR','height':'Altura','timestamp':'Timestamp',
+    'size':'Tamaño','weight':'Peso','transactions':'Transacciones','difficulty':'Dificultad',
+    'miner':'Minero','reward':'Recompensa','est-change':'Cambio estimado','prev-retarget':'Retarget anterior',
+    'blocks-left':'Bloques restantes','next-retarget':'Próximo retarget','est-date':'Fecha estimada',
+    'progress':'Progreso periodo','avg-time':'Tiempo medio bloque','curr-diff':'Dificultad actual',
+    'hashrate-curr':'Hashrate actual','recent-days':'Últimos días','immediate2':'Inmediato',
+    'blocks-wait':'Bloques en espera','pending-txs':'Txs pendientes','total-size':'Tamaño total',
+    'circulating':'En circulación','pct-mined':'% minado','btc-left':'BTC restante',
+    'curr-halving':'Halving actual','max-theoretical':'Máximo teórico','lost-btc':'BTC perdidos (est.)',
+    'eff-supply':'Supply efectivo','halvings-done':'Halvings ocurridos','accum-reduction':'Reducción acumulada',
+    'halving-height':'Altura del halving','est-time':'Tiempo estimado',
+    'ln-nodes':'Nodos totales','ln-tor':'Nodos Tor','ln-clearnet':'Nodos clearnet',
+    'ln-channels':'Canales abiertos','ln-capacity':'Capacidad total','ln-cap-btc':'Capacidad en BTC',
+    'ln-med-fee':'Fee mediano','ln-avg-cap':'Capacidad media por canal','ln-source':'Fuente',
+    'dom-mktcap':'Market cap BTC','dom-total':'Market cap total crypto','dom-change':'Cambio 24h',
+    'halving-height-label':'Altura del halving',
+  },
+  en: {
+    'sec-market':'Market','sec-net':'Bitcoin Network','sec-ln':'Lightning Network · global stats','sec-cycle':'Cycle & Economics',
+    'lbl-live':'Live · your node · 100% local','lbl-price':'BTC Price','lbl-dom':'BTC Dominance',
+    'lbl-block':'Current Block','lbl-fees':'Fees (sat/vByte)','lbl-mempool':'Mempool · next blocks',
+    'lbl-hash':'Hashrate','lbl-hash-sub':'EH/s · global network','lbl-diff':'Difficulty · Next adjustment',
+    'lbl-ln-nodes':'Active nodes','lbl-ln-cap':'Total capacity','lbl-ln-ch':'Channels · median fee',
+    'lbl-supply':'Circulating supply','lbl-halving':'Next halving','lbl-era':'Current era · subsidy',
+    'updated':'Updated','blocks':'blocks','ago':'','min':'min ago',
+    'miner-unk':'Unknown miner','next-adj':'Next adjustment in','period':'of current period',
+    'pending':'pending txs','in-queue':'MB in queue',
+    'free':'Mempool clear ✓','moderate':'Mempool moderate','busy':'Mempool congested',
+    'eco':'Economy','fast':'Fast','immediate':'Immediate','min-fee':'Min',
+    'next-halv':'~{v} days approx.','reward-curr':'Current reward','reward-next':'Reward after halving',
+    'of':'of','session':'session','source':'Source','local':'local mempool',
+    'modal-price':'💰 Bitcoin Price','modal-dom':'📊 BTC Dominance','modal-block':'📦 Latest Block',
+    'modal-diff':'⛏️ Difficulty & Adjustment','modal-hash':'🔥 Network Hashrate',
+    'modal-fees':'⚡ Fees','modal-mempool':'🌊 Mempool Detail',
+    'modal-supply':'🏦 Bitcoin Supply','modal-halving':'✂️ Next Halving','modal-ln':'⚡ Lightning Network',
+    'est-cost':'Estimated cost (standard tx 141 vB)',
+    'usd':'USD Price','eur':'EUR Price','height':'Height','timestamp':'Timestamp',
+    'size':'Size','weight':'Weight','transactions':'Transactions','difficulty':'Difficulty',
+    'miner':'Miner','reward':'Reward','est-change':'Estimated change','prev-retarget':'Previous retarget',
+    'blocks-left':'Blocks remaining','next-retarget':'Next retarget','est-date':'Estimated date',
+    'progress':'Period progress','avg-time':'Avg block time','curr-diff':'Current difficulty',
+    'hashrate-curr':'Current hashrate','recent-days':'Recent days','immediate2':'Immediate',
+    'blocks-wait':'Waiting blocks','pending-txs':'Pending txs','total-size':'Total size',
+    'circulating':'Circulating','pct-mined':'% mined','btc-left':'BTC remaining',
+    'curr-halving':'Current halving','max-theoretical':'Theoretical max','lost-btc':'Lost BTC (est.)',
+    'eff-supply':'Effective supply','halvings-done':'Halvings occurred','accum-reduction':'Accumulated reduction',
+    'halving-height':'Halving height','est-time':'Estimated time',
+    'ln-nodes':'Total nodes','ln-tor':'Tor nodes','ln-clearnet':'Clearnet nodes',
+    'ln-channels':'Open channels','ln-capacity':'Total capacity','ln-cap-btc':'Capacity in BTC',
+    'ln-med-fee':'Median fee','ln-avg-cap':'Avg capacity per channel','ln-source':'Source',
+    'dom-mktcap':'BTC market cap','dom-total':'Total crypto market cap','dom-change':'24h change',
+    'halving-height-label':'Halving height',
+  }
+};
+const t = k => (i18n[lang] && i18n[lang][k]) || k;
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.getElementById('lbl-live').textContent = t('lbl-live');
+  if(state.prices)    renderPrice();
+  if(state.fees)      renderFees();
+  if(state.mblocks && state.height != null) renderMempool();
+  if(state.height != null) renderBlock();
+  if(state.diff)      renderDiff();
+  if(state.hr)        renderHashrate();
+  if(state.ln)        renderLN();
+  if(state.dominance != null) renderDominance();
+  updateTimestamp();
+}
+function toggleLang() {
+  lang = lang === 'es' ? 'en' : 'es';
+  localStorage.setItem('lang', lang);
+  document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES';
+  document.documentElement.lang = lang;
+  applyLang();
+}
+function toggleTheme() {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
 }
 
-// ---- FETCH ----
+// ── Utils ─────────────────────────────────────────────────────────────────────
+const fmt    = (n,d=0) => n == null ? '–' : n.toLocaleString(lang==='es'?'es-ES':'en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtDate = d => d.toLocaleDateString(lang==='es'?'es-ES':'en-US',{day:'numeric',month:'long',year:'numeric'});
+function blockFillColor(pct){
+  const r=Math.round(80+pct*175), g=Math.round(147-pct*120), b=Math.round(26-pct*20);
+  return `rgba(${r},${g},${b},0.9)`;
+}
+function satsToBTC(sats){ return (sats/1e8).toFixed(0); }
+
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchAll() {
-  const [fees, diff, mblocks, hr, prices, height, blocks] = await Promise.allSettled([
+  const [fees, diff, mblocks, hr, prices, height, blocks, ln] = await Promise.allSettled([
     fetch(`${API}/v1/fees/recommended`).then(r=>r.json()),
     fetch(`${API}/v1/difficulty-adjustment`).then(r=>r.json()),
     fetch(`${API}/v1/fees/mempool-blocks`).then(r=>r.json()),
@@ -199,119 +465,185 @@ async function fetchAll() {
     fetch(`${API}/v1/prices`).then(r=>r.json()),
     fetch(`${API}/blocks/tip/height`).then(r=>r.json()),
     fetch(`${API}/blocks`).then(r=>r.json()),
+    fetch(`${API}/v1/lightning/statistics/latest`).then(r=>r.json()),
   ]);
 
-  if(fees.status==='fulfilled') { state.fees=fees.value; renderFees(); }
-  if(diff.status==='fulfilled') { state.diff=diff.value; renderDiff(); }
-  if(mblocks.status==='fulfilled') { state.mblocks=mblocks.value; renderMempool(); }
-  if(hr.status==='fulfilled') { state.hr=hr.value; renderHashrate(); }
-  if(prices.status==='fulfilled') { state.prices=prices.value; renderPrice(); }
-  if(height.status==='fulfilled' && blocks.status==='fulfilled') {
-    state.height=height.value; state.blocks=blocks.value; renderBlock();
+  // Height + blocks first so renderMempool has state.height
+  if(height.status==='fulfilled' && blocks.status==='fulfilled'){
+    state.height = height.value;
+    state.blocks = blocks.value;
+    renderBlock();
   }
+  if(prices.status==='fulfilled')  { state.prices  = prices.value;  renderPrice(); }
+  if(fees.status==='fulfilled')    { state.fees    = fees.value;    renderFees(); }
+  if(diff.status==='fulfilled')    { state.diff    = diff.value;    renderDiff(); }
+  if(hr.status==='fulfilled')      { state.hr      = hr.value;      renderHashrate(); }
+  if(mblocks.status==='fulfilled') { state.mblocks = mblocks.value; renderMempool(); }
+  if(ln.status==='fulfilled' && ln.value?.latest) { state.ln = ln.value.latest; renderLN(); }
+  else if(!state.ln) renderLN(); // show unavailable state
 
   updateTimestamp();
 }
 
-// ---- RENDER ----
+function fetchDominance() {
+  fetch('https://api.coingecko.com/api/v3/global')
+    .then(r => r.json())
+    .then(d => {
+      state.dominance    = d.data?.market_cap_percentage?.btc ?? null;
+      state.domChange    = d.data?.market_cap_change_percentage_24h_usd ?? null;
+      state.totalMktCap  = d.data?.total_market_cap?.usd ?? null;
+      state.btcMktCap    = d.data?.total_market_cap?.btc ? null : null; // not directly available
+      renderDominance();
+    })
+    .catch(() => { state.dominance = null; renderDominance(); });
+}
+
+// ── Render: Price ─────────────────────────────────────────────────────────────
 function renderPrice() {
   const p = state.prices;
-  document.getElementById('price').textContent = '$'+fmt(p.USD);
-  document.getElementById('priceSub').textContent = `€${fmt(p.EUR)} · £${fmt(p.GBP)}`;
+  document.getElementById('price').textContent    = '$' + fmt(p.USD);
+  document.getElementById('priceEur').textContent = `€${fmt(p.EUR)} EUR`;
   sparkData.push(p.USD);
-  if(sparkData.length>40) sparkData.shift();
+  if(sparkData.length > 40) sparkData.shift();
   drawSparkline();
-  if(sparkData.length>=2){
-    const pct=((sparkData[sparkData.length-1]-sparkData[0])/sparkData[0]*100).toFixed(2);
-    const up=pct>=0;
-    document.getElementById('priceTag').innerHTML=`<span class="tag ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(pct)}% sesión</span>`;
+  if(sparkData.length >= 2){
+    const pct = ((sparkData[sparkData.length-1] - sparkData[0]) / sparkData[0] * 100).toFixed(2);
+    const up  = pct >= 0;
+    document.getElementById('priceTag').innerHTML =
+      `<span class="tag ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(pct)}% ${t('session')}</span>`;
   }
 }
 
 function drawSparkline() {
-  const c=document.getElementById('sparkline'), ctx=c.getContext('2d');
-  const W=c.offsetWidth, H=50;
-  c.width=W*devicePixelRatio; c.height=H*devicePixelRatio;
-  ctx.scale(devicePixelRatio,devicePixelRatio);
-  ctx.clearRect(0,0,W,H);
-  if(sparkData.length<2) return;
-  const mn=Math.min(...sparkData), mx=Math.max(...sparkData), rng=mx-mn||1;
-  const pts=sparkData.map((v,i)=>({x:(i/(sparkData.length-1))*W, y:H-((v-mn)/rng)*(H-6)-3}));
-  const g=ctx.createLinearGradient(0,0,0,H);
+  const c = document.getElementById('sparkline'), ctx = c.getContext('2d');
+  const W = c.offsetWidth || 260, H = 50;
+  c.width = W * devicePixelRatio; c.height = H * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.clearRect(0, 0, W, H);
+  if(sparkData.length < 2) return;
+  const mn = Math.min(...sparkData), mx = Math.max(...sparkData), rng = mx - mn || 1;
+  const pts = sparkData.map((v,i) => ({ x:(i/(sparkData.length-1))*W, y:H-((v-mn)/rng)*(H-6)-3 }));
+  const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'rgba(247,147,26,0.25)'); g.addColorStop(1,'rgba(247,147,26,0)');
-  ctx.beginPath(); ctx.moveTo(pts[0].x,H);
-  pts.forEach(p=>ctx.lineTo(p.x,p.y));
-  ctx.lineTo(pts[pts.length-1].x,H); ctx.closePath();
-  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(pts[0].x, H);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length-1].x, H); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
   ctx.beginPath();
-  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
-  ctx.strokeStyle='#f7931a'; ctx.lineWidth=2; ctx.stroke();
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle = '#f7931a'; ctx.lineWidth = 2; ctx.stroke();
 }
 
+// ── Render: Dominance ─────────────────────────────────────────────────────────
+function renderDominance() {
+  const dom = state.dominance;
+  if(dom == null){
+    document.getElementById('domValue').textContent = '–';
+    document.getElementById('domSub').textContent   = lang==='es' ? 'No disponible' : 'Unavailable';
+    document.getElementById('domTag').innerHTML     = '';
+    return;
+  }
+  document.getElementById('domValue').textContent = dom.toFixed(1) + '%';
+  const chg = state.domChange;
+  document.getElementById('domSub').textContent =
+    state.totalMktCap
+      ? (lang==='es' ? 'Mcap total: ' : 'Total mcap: ') + '$' + (state.totalMktCap/1e12).toFixed(2) + 'T'
+      : 'CoinGecko · datos globales';
+  document.getElementById('domTag').innerHTML =
+    chg != null
+      ? `<span class="tag ${chg>=0?'up':'down'}">${chg>=0?'▲':'▼'} ${Math.abs(chg).toFixed(2)}% 24h</span>`
+      : '';
+}
+
+// ── Render: Block ─────────────────────────────────────────────────────────────
 function renderBlock() {
-  const h=state.height, b=state.blocks;
-  document.getElementById('blockHeight').textContent=fmt(h);
-  if(b&&b[0]){
-    const ago=Math.round((Date.now()/1000-b[0].timestamp)/60);
-    document.getElementById('blockTime').textContent=`Último hace ${ago} min`;
-    document.getElementById('blockSize').textContent=`${(b[0].size/1e3).toFixed(1)} kB · ${fmt(b[0].tx_count)} txs`;
+  const h = state.height, b = state.blocks;
+  document.getElementById('blockHeight').textContent = '#' + fmt(h);
+  if(b && b[0]){
+    const ago = Math.round((Date.now()/1000 - b[0].timestamp) / 60);
+    document.getElementById('blockTime').textContent =
+      lang==='es' ? `Hace ${ago} min · ${fmt(b[0].tx_count)} txs` : `${ago} min ago · ${fmt(b[0].tx_count)} txs`;
+    const miner = b[0].extras?.pool?.name || t('miner-unk');
+    document.getElementById('blockMiner').textContent = `⛏️ ${miner}`;
   }
   // Halving
-  const HALV=210000, next=Math.ceil(h/HALV)*HALV, left=next-h;
-  const halvDate=new Date(Date.now()+left*10*60*1000);
-  document.getElementById('halvingBlocks').textContent=fmt(left)+' bloques';
-  document.getElementById('halvingDate').textContent='~'+halvDate.toLocaleDateString('es-ES',{year:'numeric',month:'long'});
-  const halvNum=Math.floor(h/HALV);
-  const reward=50/Math.pow(2,halvNum), nextReward=50/Math.pow(2,halvNum+1);
-  document.getElementById('halvingReward').textContent=`Recompensa: ${reward} → ${nextReward} BTC`;
+  const HALV = 210000, next = Math.ceil((h+1)/HALV)*HALV, left = next - h;
+  const halvDate = new Date(Date.now() + left * 10 * 60 * 1000);
+  document.getElementById('halvingBlocks').textContent = fmt(left) + ' ' + t('blocks');
+  document.getElementById('halvingDate').textContent   = '~' + halvDate.toLocaleDateString(lang==='es'?'es-ES':'en-US',{year:'numeric',month:'long'});
+  const halvNum  = Math.floor(h / HALV);
+  const reward   = 50 / Math.pow(2, halvNum);
+  const nextRew  = 50 / Math.pow(2, halvNum + 1);
+  document.getElementById('halvingReward').textContent =
+    `${t('reward-curr')}: ${reward} → ${nextRew} BTC`;
   // Supply
-  let supply=0;
-  for(let i=0;i<halvNum;i++) supply+=210000*(50/Math.pow(2,i));
-  supply+=(h%HALV)*(50/Math.pow(2,halvNum));
-  const pct=(supply/21000000*100).toFixed(3);
-  document.getElementById('supply').textContent=fmt(supply)+' BTC';
-  document.getElementById('supplyBar').style.width=pct+'%';
-  document.getElementById('supplyPct').textContent=`${pct}% de 21,000,000`;
-  state.halvNum=halvNum; state.reward=reward; state.supply=supply; state.halvLeft=left; state.halvDate=halvDate;
+  let supply = 0;
+  for(let i = 0; i < halvNum; i++) supply += 210000 * (50/Math.pow(2,i));
+  supply += (h % HALV) * (50/Math.pow(2,halvNum));
+  const pct = (supply / 21000000 * 100).toFixed(3);
+  document.getElementById('supply').textContent        = fmt(supply) + ' BTC';
+  document.getElementById('supplyBar').style.width     = pct + '%';
+  document.getElementById('supplyPct').textContent     = `${pct}% ${t('of')} 21,000,000 BTC`;
+  // Era
+  const eraProgress = (h % HALV) / HALV * 100;
+  document.getElementById('eraValue').textContent      = `${reward} BTC`;
+  document.getElementById('eraSub').textContent        =
+    lang==='es' ? `Era ${halvNum+1} · ${t('blocks')}: ${fmt(left)} ${lang==='es'?'para halvear':'to halving'}` : `Era ${halvNum+1} · ${fmt(left)} blocks to halving`;
+  document.getElementById('eraProg').style.width       = eraProgress.toFixed(1) + '%';
+  document.getElementById('eraProgSub').textContent    = eraProgress.toFixed(1) + '% ' + t('period');
+  // Save state
+  state.halvNum = halvNum; state.reward = reward; state.supply = supply;
+  state.halvLeft = left; state.halvDate = halvDate; state.halvNextHeight = next;
 }
 
+// ── Render: Difficulty ────────────────────────────────────────────────────────
 function renderDiff() {
-  const d=state.diff;
-  const sign=d.difficultyChange>=0?'+':'';
-  const col=d.difficultyChange>=0?'green':'red';
-  document.getElementById('difficulty').innerHTML=`<span class="${col}">${sign}${d.difficultyChange.toFixed(2)}%</span>`;
-  document.getElementById('diffSub').textContent=`Próximo ajuste en ${d.remainingBlocks} bloques`;
-  document.getElementById('diffProg').style.width=d.progressPercent+'%';
-  document.getElementById('diffPct').textContent=`${d.progressPercent.toFixed(1)}% del periodo actual`;
+  const d = state.diff;
+  const sign = d.difficultyChange >= 0 ? '+' : '';
+  const col  = d.difficultyChange >= 0 ? 'green' : 'red';
+  document.getElementById('difficulty').innerHTML    = `<span class="${col}">${sign}${d.difficultyChange.toFixed(2)}%</span>`;
+  document.getElementById('diffSub').textContent     = `${t('next-adj')} ${d.remainingBlocks} ${t('blocks')}`;
+  document.getElementById('diffProg').style.width    = d.progressPercent + '%';
+  document.getElementById('diffPct').textContent     = `${d.progressPercent.toFixed(1)}% ${t('period')}`;
 }
 
+// ── Render: Hashrate ──────────────────────────────────────────────────────────
 function renderHashrate() {
-  const hr=state.hr;
-  const ehS=(hr.currentHashrate/1e18).toFixed(1);
-  document.getElementById('hashrate').textContent=ehS;
-  // Mini bars from last 3 days
-  const bars=hr.hashrates.slice(-7);
-  const mx=Math.max(...bars.map(b=>b.avgHashrate));
-  document.getElementById('hrBars').innerHTML=bars.map(b=>{
-    const h=Math.max(8,(b.avgHashrate/mx)*40);
-    return `<div class="hr-bar" style="height:${h}px" title="${(b.avgHashrate/1e18).toFixed(1)} EH/s · ${new Date(b.timestamp*1000).toLocaleDateString('es-ES')}"></div>`;
+  const hr = state.hr;
+  document.getElementById('hashrate').textContent = (hr.currentHashrate/1e18).toFixed(1);
+  const bars = hr.hashrates.slice(-7);
+  const mx   = Math.max(...bars.map(b => b.avgHashrate));
+  document.getElementById('hrBars').innerHTML = bars.map(b => {
+    const h = Math.max(8, (b.avgHashrate/mx)*40);
+    return `<div class="hr-bar" style="height:${h}px" title="${(b.avgHashrate/1e18).toFixed(1)} EH/s"></div>`;
   }).join('');
 }
 
+// ── Render: Fees ──────────────────────────────────────────────────────────────
 function renderFees() {
-  const f=state.fees;
-  const fees=[
-    {label:'Inmediato',val:f.fastestFee,cls:'f1'},
-    {label:'~10 min',val:Math.round((f.fastestFee+f.halfHourFee)/2),cls:'f2'},
-    {label:'~30 min',val:f.halfHourFee,cls:'f3'},
-    {label:'~1h',val:f.hourFee,cls:'f4'},
-    {label:'Eco',val:f.economyFee,cls:'f5'},
+  const f = state.fees, eurPrice = state.prices?.EUR;
+  const fees = [
+    {label:t('immediate'), val:f.fastestFee,  cls:'f1'},
+    {label:'~10 min',      val:Math.round((f.fastestFee+f.halfHourFee)/2), cls:'f2'},
+    {label:'~30 min',      val:f.halfHourFee, cls:'f3'},
+    {label:'~1h',          val:f.hourFee,     cls:'f4'},
+    {label:t('eco'),       val:f.economyFee,  cls:'f5'},
   ];
-  const mx=Math.max(...fees.map(x=>x.val));
-  document.getElementById('feesArea').innerHTML=`
+  const mx = Math.max(...fees.map(x => x.val));
+  let statusTag, statusCls;
+  if(f.fastestFee <= 2)       { statusTag = t('free');     statusCls = 'free'; }
+  else if(f.fastestFee <= 15) { statusTag = t('moderate'); statusCls = 'mid';  }
+  else                        { statusTag = t('busy');     statusCls = 'busy'; }
+  const eurFast = eurPrice ? ((f.fastestFee * 141 / 1e8) * eurPrice).toFixed(2) : null;
+  const eurEco  = eurPrice ? ((f.economyFee * 141 / 1e8) * eurPrice).toFixed(3) : null;
+  document.getElementById('feesArea').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
+      <span class="tag ${statusCls}">${statusTag}</span>
+      ${eurFast ? `<span style="font-size:.72rem;color:var(--text-sub)">~€${eurFast} ${t('fast').toLowerCase()} · €${eurEco} ${t('eco').toLowerCase()}</span>` : ''}
+    </div>
     <div class="fee-bars">
-      ${fees.map(x=>{
-        const h=Math.max(10,(x.val/mx)*100);
+      ${fees.map(x => {
+        const h = Math.max(10, (x.val/mx)*100);
         return `<div class="fee-bar-wrap">
           <div class="fee-val">${x.val}</div>
           <div class="fee-bar ${x.cls}" style="height:${h}%"></div>
@@ -319,200 +651,246 @@ function renderFees() {
         </div>`;
       }).join('')}
     </div>
-    <div class="card-sub" style="margin-top:8px">sat/vByte · Mínimo: ${f.minimumFee} · <span class="${f.fastestFee<=2?'green':f.fastestFee<=10?'yellow':'red'}">${f.fastestFee<=2?'Mempool casi vacío ✓':f.fastestFee<=10?'Fees bajas':'Fees altas'}</span></div>
+    <div class="card-sub" style="margin-top:8px">${t('min-fee')}: ${f.minimumFee} sat/vB</div>
   `;
 }
 
+// ── Render: Mempool ───────────────────────────────────────────────────────────
 function renderMempool() {
-  const blocks=state.mblocks;
-  const totalTxs=blocks.reduce((a,b)=>a+b.nTx,0);
-  const totalMB=(blocks.reduce((a,b)=>a+b.blockSize,0)/1e6).toFixed(2);
-  document.getElementById('mempoolArea').innerHTML=`
+  const blocks = state.mblocks;
+  const h      = state.height; // guaranteed set before this call
+  const totalTxs = blocks.reduce((a,b) => a+b.nTx, 0);
+  const totalMB  = (blocks.reduce((a,b) => a+b.blockSize, 0) / 1e6).toFixed(2);
+  document.getElementById('mempoolArea').innerHTML = `
     <div class="mblocks">
-      ${blocks.map((b,i)=>{
-        const fill=Math.min(1,b.blockSize/(1.5e6));
-        const bg=blockFillColor(fill);
-        const med=b.medianFee?b.medianFee.toFixed(1):'~1';
+      ${blocks.map((b,i) => {
+        const fill     = Math.min(1, b.blockSize / 1.5e6);
+        const bg       = blockFillColor(fill);
+        const med      = b.medianFee ? b.medianFee.toFixed(1) : '~1';
+        const blockNum = h != null ? `#${fmt(h + i + 1)}` : `+${i+1}`;
         return `<div class="mblock" style="background:${bg}" title="${fmt(b.nTx)} txs · ${(b.blockSize/1e3).toFixed(0)}kB · med ${med} s/vB">
-          <div class="bn">B+${i+1}</div>
+          <div class="bn">${blockNum}</div>
           <div class="bs">${(b.blockSize/1e3).toFixed(0)}kB</div>
           <div class="bf">${med} s/vB</div>
         </div>`;
       }).join('')}
     </div>
-    <div class="card-sub" style="margin-top:8px">${fmt(totalTxs)} txs pendientes · ${totalMB} MB en cola · ${blocks.length} bloques</div>
+    <div class="card-sub" style="margin-top:8px">${fmt(totalTxs)} ${t('pending')} · ${totalMB} ${t('in-queue')} · ${blocks.length} ${t('blocks')}</div>
   `;
 }
 
-// ---- MODALS ----
+// ── Render: Lightning ─────────────────────────────────────────────────────────
+function renderLN() {
+  const ln = state.ln;
+  if(!ln){
+    ['lnNodes','lnCap','lnChannels'].forEach(id => {
+      document.getElementById(id).innerHTML = '<span class="muted" style="font-size:1rem">–</span>';
+    });
+    document.getElementById('lnNodesSub').textContent = lang==='es' ? 'Sin datos' : 'No data';
+    document.getElementById('lnCapSub').textContent   = '';
+    document.getElementById('lnFeeSub').textContent   = '';
+    return;
+  }
+  const capBTC = (ln.total_capacity / 1e8).toFixed(0);
+  const capBTCfmt = parseInt(capBTC).toLocaleString(lang==='es'?'es-ES':'en-US');
+  const eurPrice  = state.prices?.EUR;
+  const capEUR    = eurPrice ? '€' + ((ln.total_capacity / 1e8) * eurPrice / 1e6).toFixed(0) + 'M' : '';
+  document.getElementById('lnNodes').textContent    = fmt(ln.node_count);
+  document.getElementById('lnNodesSub').textContent =
+    `Tor: ${fmt(ln.tor_nodes)} · Clearnet: ${fmt(ln.clearnet_nodes)}`;
+  document.getElementById('lnCap').textContent    = capBTCfmt + ' BTC';
+  document.getElementById('lnCapSub').textContent = capEUR ? capEUR + ' EUR' : '₿ Lightning global';
+  document.getElementById('lnChannels').textContent = fmt(ln.channel_count);
+  document.getElementById('lnFeeSub').textContent  =
+    `${t('ln-med-fee')}: ${ln.med_fee_rate ?? '–'} ppm`;
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
 const modalDefs = {
-  price: () => {
-    const p=state.prices||{};
-    return {
-      title:'💰 Precio Bitcoin',
-      html:`<table>
-        <tr><td>USD</td><td>$${fmt(p.USD)}</td></tr>
-        <tr><td>EUR</td><td>€${fmt(p.EUR)}</td></tr>
-        <tr><td>GBP</td><td>£${fmt(p.GBP)}</td></tr>
-        <tr><td>CHF</td><td>${fmt(p.CHF)}</td></tr>
-        <tr><td>CAD</td><td>${fmt(p.CAD)}</td></tr>
-        <tr><td>AUD</td><td>${fmt(p.AUD)}</td></tr>
-        <tr><td>JPY</td><td>¥${fmt(p.JPY)}</td></tr>
-        <tr><td>Fuente</td><td class="muted">mempool local</td></tr>
-      </table>`
-    };
-  },
+  price: () => ({
+    title: t('modal-price'),
+    html:`<table>
+      <tr><td>${t('usd')}</td><td>$${fmt(state.prices?.USD)}</td></tr>
+      <tr><td>${t('eur')}</td><td>€${fmt(state.prices?.EUR)}</td></tr>
+      <tr><td>GBP</td><td>£${fmt(state.prices?.GBP)}</td></tr>
+      <tr><td>CHF</td><td>${fmt(state.prices?.CHF)} CHF</td></tr>
+      <tr><td>CAD</td><td>${fmt(state.prices?.CAD)} CAD</td></tr>
+      <tr><td>AUD</td><td>${fmt(state.prices?.AUD)} AUD</td></tr>
+      <tr><td>JPY</td><td>¥${fmt(state.prices?.JPY)}</td></tr>
+      <tr><td>${t('source')}</td><td class="muted">${t('local')}</td></tr>
+    </table>`
+  }),
+  dominance: () => ({
+    title: t('modal-dom'),
+    html:`<table>
+      <tr><td>${t('lbl-dom')}</td><td class="orange">${state.dominance!=null?state.dominance.toFixed(2)+'%':'–'}</td></tr>
+      <tr><td>${t('dom-change')}</td><td class="${(state.domChange||0)>=0?'green':'red'}">${state.domChange!=null?((state.domChange>=0?'+':'')+state.domChange.toFixed(2)+'%'):'–'}</td></tr>
+      <tr><td>${t('dom-total')}</td><td>${state.totalMktCap?'$'+(state.totalMktCap/1e12).toFixed(2)+'T':'–'}</td></tr>
+      <tr><td>${t('source')}</td><td class="muted">CoinGecko API (ext)</td></tr>
+    </table>`
+  }),
   block: () => {
-    const b=state.blocks&&state.blocks[0]||{};
-    return {
-      title:'📦 Último bloque',
-      html:`<table>
-        <tr><td>Altura</td><td>${fmt(state.height)}</td></tr>
-        <tr><td>Hash</td><td style="font-size:0.6rem;word-break:break-all">${b.id||'–'}</td></tr>
-        <tr><td>Timestamp</td><td>${b.timestamp?new Date(b.timestamp*1000).toLocaleString('es-ES'):'–'}</td></tr>
-        <tr><td>Tamaño</td><td>${b.size?(b.size/1e3).toFixed(1)+' kB':'–'}</td></tr>
-        <tr><td>Peso</td><td>${b.weight?(b.weight/1e3).toFixed(1)+' kWU':'–'}</td></tr>
-        <tr><td>Transacciones</td><td>${fmt(b.tx_count)}</td></tr>
-        <tr><td>Dificultad</td><td>${b.difficulty?b.difficulty.toExponential(3):'–'}</td></tr>
-        <tr><td>Merkle root</td><td style="font-size:0.6rem;word-break:break-all">${b.merkle_root||'–'}</td></tr>
-        <tr><td>Minero</td><td>${b.extras&&b.extras.pool?b.extras.pool.name:'Desconocido'}</td></tr>
-        <tr><td>Recompensa</td><td>${b.extras&&b.extras.reward?`${(b.extras.reward/1e8).toFixed(4)} BTC`:'–'}</td></tr>
-      </table>`
-    };
+    const b = state.blocks?.[0] || {};
+    const miner = b.extras?.pool?.name || t('miner-unk');
+    return { title:t('modal-block'), html:`<table>
+      <tr><td>${t('height')}</td><td>#${fmt(state.height)}</td></tr>
+      <tr><td>Hash</td><td style="font-size:.6rem;word-break:break-all">${b.id||'–'}</td></tr>
+      <tr><td>${t('timestamp')}</td><td>${b.timestamp?new Date(b.timestamp*1000).toLocaleString(lang==='es'?'es-ES':'en-US'):'–'}</td></tr>
+      <tr><td>${t('size')}</td><td>${b.size?(b.size/1e3).toFixed(1)+' kB':'–'}</td></tr>
+      <tr><td>${t('weight')}</td><td>${b.weight?(b.weight/1e3).toFixed(1)+' kWU':'–'}</td></tr>
+      <tr><td>${t('transactions')}</td><td>${fmt(b.tx_count)}</td></tr>
+      <tr><td>${t('miner')}</td><td>${miner}</td></tr>
+      <tr><td>${t('reward')}</td><td>${b.extras?.reward?`${(b.extras.reward/1e8).toFixed(4)} BTC`:'–'}</td></tr>
+    </table>`};
   },
   difficulty: () => {
-    const d=state.diff||{};
-    return {
-      title:'⛏️ Dificultad y ajuste',
-      html:`<table>
-        <tr><td>Cambio estimado</td><td class="${d.difficultyChange>=0?'green':'red'}">${d.difficultyChange>=0?'+':''}${d.difficultyChange?d.difficultyChange.toFixed(4)+'%':'–'}</td></tr>
-        <tr><td>Retarget anterior</td><td class="${d.previousRetarget>=0?'green':'red'}">${d.previousRetarget>=0?'+':''}${d.previousRetarget?d.previousRetarget.toFixed(4)+'%':'–'}</td></tr>
-        <tr><td>Bloques restantes</td><td>${fmt(d.remainingBlocks)}</td></tr>
-        <tr><td>Próximo retarget</td><td>#${fmt(d.nextRetargetHeight)}</td></tr>
-        <tr><td>Fecha estimada</td><td>${d.estimatedRetargetDate?new Date(d.estimatedRetargetDate).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'–'}</td></tr>
-        <tr><td>Progreso periodo</td><td>${d.progressPercent?d.progressPercent.toFixed(2)+'%':'–'}</td></tr>
-        <tr><td>Tiempo medio bloque</td><td>${d.timeAvg?Math.round(d.timeAvg/60)+' min '+Math.round((d.timeAvg%60))+' s':'–'}</td></tr>
-        <tr><td>Bloques esperados</td><td>${d.expectedBlocks?d.expectedBlocks.toFixed(0):'–'}</td></tr>
-        <tr><td>Dificultad actual</td><td>${d.currentDifficulty?(d.currentDifficulty/1e12).toFixed(2)+' T':'–'}</td></tr>
-      </table>`
-    };
+    const d = state.diff || {};
+    return { title:t('modal-diff'), html:`<table>
+      <tr><td>${t('est-change')}</td><td class="${d.difficultyChange>=0?'green':'red'}">${d.difficultyChange>=0?'+':''}${d.difficultyChange?d.difficultyChange.toFixed(4)+'%':'–'}</td></tr>
+      <tr><td>${t('prev-retarget')}</td><td class="${d.previousRetarget>=0?'green':'red'}">${d.previousRetarget>=0?'+':''}${d.previousRetarget?d.previousRetarget.toFixed(4)+'%':'–'}</td></tr>
+      <tr><td>${t('blocks-left')}</td><td>${fmt(d.remainingBlocks)}</td></tr>
+      <tr><td>${t('next-retarget')}</td><td>#${fmt(d.nextRetargetHeight)}</td></tr>
+      <tr><td>${t('est-date')}</td><td>${d.estimatedRetargetDate?fmtDate(new Date(d.estimatedRetargetDate)):'–'}</td></tr>
+      <tr><td>${t('progress')}</td><td>${d.progressPercent?d.progressPercent.toFixed(2)+'%':'–'}</td></tr>
+      <tr><td>${t('avg-time')}</td><td>${d.timeAvg?Math.round(d.timeAvg/60)+' min':'–'}</td></tr>
+      <tr><td>${t('curr-diff')}</td><td>${d.currentDifficulty?(d.currentDifficulty/1e12).toFixed(2)+' T':'–'}</td></tr>
+    </table>`};
   },
   hashrate: () => {
-    const hr=state.hr||{};
-    const ehS=(hr.currentHashrate/1e18).toFixed(2);
-    return {
-      title:'🔥 Hashrate de la red',
-      html:`<table>
-        <tr><td>Hashrate actual</td><td class="green">${ehS} EH/s</td></tr>
-        <tr><td>En H/s</td><td style="font-size:0.7rem">${hr.currentHashrate?hr.currentHashrate.toExponential(4):'–'}</td></tr>
-        <tr><td>Dificultad</td><td>${hr.currentDifficulty?(hr.currentDifficulty/1e12).toFixed(2)+' T':'–'}</td></tr>
-      </table>
-      <div style="margin-top:16px;font-size:0.75rem;color:#444">Últimos días:</div>
-      <div class="hr-bars" style="height:60px;margin-top:8px">
-        ${(hr.hashrates||[]).map(b=>{
-          const mx=Math.max(...(hr.hashrates||[]).map(x=>x.avgHashrate));
-          const h=Math.max(8,(b.avgHashrate/mx)*60);
-          return `<div class="hr-bar" style="height:${h}px;flex:1" title="${(b.avgHashrate/1e18).toFixed(2)} EH/s · ${new Date(b.timestamp*1000).toLocaleDateString('es-ES')}"></div>`;
-        }).join('')}
-      </div>`
-    };
+    const hr = state.hr || {};
+    return { title:t('modal-hash'), html:`<table>
+      <tr><td>${t('hashrate-curr')}</td><td class="green">${(hr.currentHashrate/1e18).toFixed(2)} EH/s</td></tr>
+      <tr><td>${t('curr-diff')}</td><td>${hr.currentDifficulty?(hr.currentDifficulty/1e12).toFixed(2)+' T':'–'}</td></tr>
+    </table>
+    <div style="margin-top:16px;font-size:.75rem;color:var(--text-muted)">${t('recent-days')}:</div>
+    <div class="hr-bars" style="height:60px;margin-top:8px">
+      ${(hr.hashrates||[]).map(b=>{
+        const mx=Math.max(...(hr.hashrates||[]).map(x=>x.avgHashrate));
+        const h=Math.max(8,(b.avgHashrate/mx)*60);
+        return `<div class="hr-bar" style="height:${h}px;flex:1" title="${(b.avgHashrate/1e18).toFixed(2)} EH/s"></div>`;
+      }).join('')}
+    </div>`};
   },
   fees: () => {
-    const f=state.fees||{};
-    return {
-      title:'⚡ Comisiones',
-      html:`<table>
-        <tr><td>Inmediato (próximo bloque)</td><td class="orange">${f.fastestFee} sat/vB</td></tr>
-        <tr><td>~30 minutos</td><td class="yellow">${f.halfHourFee} sat/vB</td></tr>
-        <tr><td>~1 hora</td><td class="green">${f.hourFee} sat/vB</td></tr>
-        <tr><td>Económico</td><td class="blue">${f.economyFee} sat/vB</td></tr>
-        <tr><td>Mínimo absoluto</td><td>${f.minimumFee} sat/vB</td></tr>
-      </table>
-      <div style="margin-top:16px;padding:12px;background:#1a1a2e;border-radius:10px;font-size:0.8rem">
-        <div style="color:#444;margin-bottom:8px;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase">Estimación de coste</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div>Tx estándar (141 vB)<br><span style="color:#f7931a;font-weight:700">${(f.fastestFee*141)} sats</span> rápido</div>
-          <div>Tx SegWit (103 vB)<br><span style="color:#4caf82;font-weight:700">${(f.economyFee*103)} sats</span> eco</div>
-        </div>
-      </div>`
-    };
+    const f = state.fees || {}, eur = state.prices?.EUR;
+    const satToEur = sat => eur ? '€'+(sat/1e8*eur).toFixed(3) : '–';
+    return { title:t('modal-fees'), html:`<table>
+      <tr><td>${t('immediate')}</td><td class="orange">${f.fastestFee} sat/vB</td></tr>
+      <tr><td>~30 min</td><td class="yellow">${f.halfHourFee} sat/vB</td></tr>
+      <tr><td>~1h</td><td class="green">${f.hourFee} sat/vB</td></tr>
+      <tr><td>${t('eco')}</td><td class="blue">${f.economyFee} sat/vB</td></tr>
+      <tr><td>${t('min-fee')}</td><td>${f.minimumFee} sat/vB</td></tr>
+    </table>
+    <div style="margin-top:16px;padding:12px;background:var(--inner-bg);border-radius:10px;font-size:.8rem">
+      <div style="color:var(--text-muted);margin-bottom:8px;font-size:.65rem;letter-spacing:1px;text-transform:uppercase">${t('est-cost')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;color:var(--inner-color)">
+        <div>${t('fast')}<br><span style="color:#f7931a;font-weight:700">${satToEur(f.fastestFee*141)}</span></div>
+        <div>${t('eco')}<br><span style="color:#4caf82;font-weight:700">${satToEur(f.economyFee*141)}</span></div>
+      </div>
+    </div>`};
   },
   mempool: () => {
-    const blocks=state.mblocks||[];
-    const totalTxs=blocks.reduce((a,b)=>a+b.nTx,0);
-    return {
-      title:'🌊 Mempool detalle',
-      html:`<table style="margin-bottom:12px">
-        <tr><td>Bloques en espera</td><td>${blocks.length}</td></tr>
-        <tr><td>Txs pendientes</td><td>${fmt(totalTxs)}</td></tr>
-        <tr><td>Tamaño total</td><td>${(blocks.reduce((a,b)=>a+b.blockSize,0)/1e6).toFixed(2)} MB</td></tr>
-      </table>
-      ${blocks.map((b,i)=>`
-        <div style="background:#0f0f1a;border:1px solid #1a1a2e;border-radius:8px;padding:10px;margin-bottom:6px;font-size:0.78rem">
-          <div style="font-weight:700;color:#f7931a;margin-bottom:4px">Bloque +${i+1}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:#888">
-            <div>Txs: <span style="color:#ccc">${fmt(b.nTx)}</span></div>
-            <div>Tamaño: <span style="color:#ccc">${(b.blockSize/1e3).toFixed(0)} kB</span></div>
-            <div>Fee media: <span style="color:#ccc">${b.medianFee?b.medianFee.toFixed(1):'~1'} s/vB</span></div>
-            <div>Fee mín: <span style="color:#ccc">${b.minFee||1} s/vB</span></div>
-          </div>
-        </div>`).join('')}`
-    };
+    const blocks = state.mblocks || [], h = state.height;
+    const totalTxs = blocks.reduce((a,b)=>a+b.nTx,0);
+    return { title:t('modal-mempool'), html:`<table style="margin-bottom:12px">
+      <tr><td>${t('blocks-wait')}</td><td>${blocks.length}</td></tr>
+      <tr><td>${t('pending-txs')}</td><td>${fmt(totalTxs)}</td></tr>
+      <tr><td>${t('total-size')}</td><td>${(blocks.reduce((a,b)=>a+b.blockSize,0)/1e6).toFixed(2)} MB</td></tr>
+    </table>
+    ${blocks.map((b,i)=>{
+      const blockNum = h != null ? `#${fmt(h+i+1)}` : `+${i+1}`;
+      return `<div style="background:var(--inner-bg);border-radius:8px;padding:10px;margin-bottom:6px;font-size:.78rem">
+        <div style="font-weight:700;color:#f7931a;margin-bottom:4px">${blockNum}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:var(--text-sub)">
+          <div>Txs: <span style="color:var(--text)">${fmt(b.nTx)}</span></div>
+          <div>${t('size')}: <span style="color:var(--text)">${(b.blockSize/1e3).toFixed(0)} kB</span></div>
+          <div>Fee med: <span style="color:var(--text)">${b.medianFee?b.medianFee.toFixed(1):'~1'} s/vB</span></div>
+          <div>Fee min: <span style="color:var(--text)">${b.minFee||1} s/vB</span></div>
+        </div>
+      </div>`;
+    }).join('')}`};
   },
   supply: () => {
-    const h=state.height||0, s=state.supply||0;
-    return {
-      title:'🏦 Supply Bitcoin',
-      html:`<table>
-        <tr><td>En circulación</td><td class="orange">${fmt(s)} BTC</td></tr>
-        <tr><td>% minado</td><td>${(s/21000000*100).toFixed(4)}%</td></tr>
-        <tr><td>BTC restante</td><td>${fmt(21000000-s)} BTC</td></tr>
-        <tr><td>Halving actual</td><td>#${state.halvNum||0} (${state.reward||0} BTC/bloque)</td></tr>
-        <tr><td>Máximo teórico</td><td>20,999,999.97 BTC</td></tr>
-        <tr><td>BTC perdidos (est.)</td><td class="muted">~3,700,000 BTC</td></tr>
-        <tr><td>Supply efectivo</td><td class="green">~${fmt((s-3700000))} BTC</td></tr>
-      </table>`
-    };
+    const s = state.supply || 0;
+    return { title:t('modal-supply'), html:`<table>
+      <tr><td>${t('circulating')}</td><td class="orange">${fmt(s)} BTC</td></tr>
+      <tr><td>${t('pct-mined')}</td><td>${(s/21000000*100).toFixed(4)}%</td></tr>
+      <tr><td>${t('btc-left')}</td><td>${fmt(21000000-s)} BTC</td></tr>
+      <tr><td>${t('curr-halving')}</td><td>#${state.halvNum||0} (${state.reward||0} BTC/${lang==='es'?'bloque':'block'})</td></tr>
+      <tr><td>${t('max-theoretical')}</td><td>20,999,999.97 BTC</td></tr>
+      <tr><td>${t('lost-btc')}</td><td class="muted">~3,700,000 BTC</td></tr>
+      <tr><td>${t('eff-supply')}</td><td class="green">~${fmt(s-3700000)} BTC</td></tr>
+    </table>`};
   },
   halving: () => {
-    const left=state.halvLeft||0;
-    return {
-      title:'✂️ Próximo halving',
-      html:`<table>
-        <tr><td>Bloques restantes</td><td class="yellow">${fmt(left)}</td></tr>
-        <tr><td>Altura del halving</td><td>#${fmt(state.height+(left||0))}</td></tr>
-        <tr><td>Fecha estimada</td><td>${state.halvDate?state.halvDate.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'–'}</td></tr>
-        <tr><td>Tiempo estimado</td><td>${left?Math.round(left*10/60/24)+' días aprox.':'–'}</td></tr>
-        <tr><td>Recompensa actual</td><td>${state.reward||0} BTC/bloque</td></tr>
-        <tr><td>Recompensa tras halving</td><td>${state.reward?state.reward/2:0} BTC/bloque</td></tr>
-        <tr><td>Halvings ocurridos</td><td>${state.halvNum||0}</td></tr>
-        <tr><td>Reducción acumulada</td><td>${state.halvNum?((1-1/Math.pow(2,state.halvNum||0))*100).toFixed(2)+'%':'–'}</td></tr>
-      </table>`
-    };
-  }
+    const left = state.halvLeft || 0;
+    return { title:t('modal-halving'), html:`<table>
+      <tr><td>${t('blocks-left')}</td><td class="yellow">${fmt(left)}</td></tr>
+      <tr><td>${t('halving-height-label')}</td><td>#${fmt(state.halvNextHeight)}</td></tr>
+      <tr><td>${t('est-date')}</td><td>${state.halvDate?fmtDate(state.halvDate):'–'}</td></tr>
+      <tr><td>${t('est-time')}</td><td>${left?Math.round(left*10/60/24)+' '+(lang==='es'?'días aprox.':'days approx.'):'–'}</td></tr>
+      <tr><td>${t('reward-curr')}</td><td>${state.reward||0} BTC/${lang==='es'?'bloque':'block'}</td></tr>
+      <tr><td>${t('reward-next')}</td><td>${state.reward?state.reward/2:0} BTC/${lang==='es'?'bloque':'block'}</td></tr>
+      <tr><td>${t('halvings-done')}</td><td>${state.halvNum||0}</td></tr>
+      <tr><td>${t('accum-reduction')}</td><td>${state.halvNum?((1-1/Math.pow(2,state.halvNum))*100).toFixed(2)+'%':'–'}</td></tr>
+    </table>`};
+  },
+  ln: () => {
+    const ln = state.ln;
+    if(!ln) return { title:t('modal-ln'), html:`<p style="color:var(--text-muted);font-size:.85rem">${lang==='es'?'Datos no disponibles desde la API local.':'Data unavailable from local API.'}</p>` };
+    const capBTC = (ln.total_capacity/1e8).toFixed(2);
+    const eurPrice = state.prices?.EUR;
+    const capEUR  = eurPrice ? '€'+(ln.total_capacity/1e8*eurPrice/1e6).toFixed(0)+'M' : '–';
+    return { title:t('modal-ln'), html:`<table>
+      <tr><td>${t('ln-nodes')}</td><td class="purple">${fmt(ln.node_count)}</td></tr>
+      <tr><td>${t('ln-tor')}</td><td>${fmt(ln.tor_nodes)}</td></tr>
+      <tr><td>${t('ln-clearnet')}</td><td>${fmt(ln.clearnet_nodes)}</td></tr>
+      <tr><td>${t('ln-channels')}</td><td class="purple">${fmt(ln.channel_count)}</td></tr>
+      <tr><td>${t('ln-capacity')}</td><td class="yellow">${parseFloat(capBTC).toLocaleString(lang==='es'?'es-ES':'en-US',{minimumFractionDigits:2})} BTC</td></tr>
+      <tr><td>EUR</td><td>${capEUR}</td></tr>
+      <tr><td>${t('ln-avg-cap')}</td><td>${fmt(ln.avg_capacity)} sats</td></tr>
+      <tr><td>${t('ln-med-fee')}</td><td>${ln.med_fee_rate??'–'} ppm</td></tr>
+      <tr><td>${t('ln-source')}</td><td class="muted">${t('local')}</td></tr>
+    </table>`};
+  },
 };
 
 function openModal(key) {
-  const def=modalDefs[key]&&modalDefs[key]();
+  const def = modalDefs[key] && modalDefs[key]();
   if(!def) return;
-  document.getElementById('modalTitle').textContent=def.title;
-  document.getElementById('modalContent').innerHTML=def.html;
+  document.getElementById('modalTitle').textContent  = def.title;
+  document.getElementById('modalContent').innerHTML  = def.html;
   document.getElementById('modal').classList.add('open');
 }
 function closeModal(e) {
-  if(!e||e.target===document.getElementById('modal')||e.currentTarget.classList.contains('modal-close'))
+  if(!e || e.target === document.getElementById('modal') || e.currentTarget.classList.contains('modal-close'))
     document.getElementById('modal').classList.remove('open');
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('modal').classList.remove('open'); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.getElementById('modal').classList.remove('open'); });
 
 function updateTimestamp() {
-  document.getElementById('lastUpdated').textContent='Actualizado: '+new Date().toLocaleTimeString('es-ES');
+  document.getElementById('lastUpdated').textContent =
+    t('updated') + ': ' + new Date().toLocaleTimeString(lang==='es'?'es-ES':'en-US');
 }
 
-// Initial + auto refresh
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
 fetchAll();
-setInterval(()=>{ fetch(`${API}/v1/prices`).then(r=>r.json()).then(d=>{ state.prices=d; renderPrice(); updateTimestamp(); }); }, 30000);
+fetchDominance();
+
+// Precio cada 30s
+setInterval(() => {
+  fetch(`${API}/v1/prices`).then(r=>r.json()).then(d => {
+    state.prices = d; renderPrice();
+    if(state.fees) renderFees();
+    updateTimestamp();
+  });
+}, 30000);
+
+// Todo cada 60s
 setInterval(fetchAll, 60000);
+
+// Dominancia cada 5 min (CoinGecko rate limits)
+setInterval(fetchDominance, 300000);
 </script>
 </body>
 </html>
