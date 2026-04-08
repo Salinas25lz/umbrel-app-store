@@ -1,26 +1,41 @@
-# Bitcoin Dashboard for Umbrel
+# ₿ Bitcoin Dashboard for Umbrel
 
-Un dashboard visual elegante y minimalista para monitorear el estado de la red Bitcoin en tiempo real desde tu nodo Umbrel.
+![Logo](logo.svg)
 
-## Características
+Un dashboard visual elegante y minimalista para monitorear el estado completo de la red Bitcoin en tiempo real desde tu nodo Umbrel. **Versión 1.1.0** con fuentes de datos configurables, cache inteligente y monitorización avanzada.
 
-- **Precio BTC**: USD y EUR con gráfico sparkline y cambio de sesión
-- **Comisiones**: Sat/vB y coste estimado en EUR para transacción estándar
-- **Mempool**: Próximos bloques con tamaño, fees medianos y numeración correcta
-- **Bloque actual**: Altura, minero, timestamp y transacciones
-- **Hashrate**: EH/s actual y gráfico de últimos días
-- **Dificultad**: Cambio estimado, bloques restantes y progreso del periodo
-- **Supply**: BTC en circulación y porcentaje minado
-- **Halving**: Cuenta atrás en bloques y fecha estimada
-- **Lightning Network**: Nodos, canales y capacidad total
+## ✨ Características principales
+
+### 📊 **Datos en tiempo real**
+- **Precio BTC**: USD/EUR con gráfico sparkline y cambio de sesión
+- **Comisiones**: Sat/vB + coste estimado en EUR (transacción estándar)
+- **Mempool**: Próximos bloques con tamaño, fees y numeración correcta
+- **Bloque actual**: Altura, minero, timestamp, transacciones
+- **Hashrate**: EH/s actual + gráfico últimos días
+- **Dificultad**: Cambio estimado, bloques restantes, progreso
+- **Supply**: BTC en circulación + porcentaje minado
+- **Halving**: Cuenta atrás en bloques + fecha estimada
+- **Lightning Network**: Nodos, canales, capacidad total
 - **Dominancia BTC**: Desde CoinGecko (opcional)
 
-## Interfaz
+### 🔧 **Funcionalidades avanzadas (v1.1.0)**
+- **✅ Fuentes múltiples**: Local (tu nodo) / Público (mempool.space) / Testnet
+- **✅ Configuración flexible**: Endpoints personalizables vía UI
+- **✅ Fallback automático**: Si local falla → usa público automáticamente
+- **✅ Cache inteligente**: Datos que cambian poco se cachean (5-10 min)
+- **✅ Monitorización**: Estado conexión + tiempo respuesta en ms
+- **✅ Transparencia**: Indicadores 🖥️/🌐 muestran fuente de cada dato
+- **✅ Optimizado**: Menos llamadas API, mejor rendimiento
 
-- **Bilingüe**: Español/Inglés con toggle
-- **Tema claro/oscuro**: Cambio instantáneo
-- **Responsive**: Diseño adaptable a móviles y desktop
-- **Modales**: Información detallada en cada sección
+## 🎨 Interfaz de usuario
+
+- **🌐 Bilingüe**: Español/Inglés (toggle en header)
+- **☀️ Tema claro/oscuro**: Cambio instantáneo
+- **📱 Responsive**: Diseño adaptable móvil/desktop
+- **ℹ️ Modales**: Información detallada en cada sección
+- **⚙️ Configuración**: UI integrada para endpoints
+- **📊 Indicadores**: Fuente de datos en cada card
+- **⚡ Estado**: Conexión + tiempo respuesta en tiempo real
 
 ## Requisitos
 
@@ -57,17 +72,33 @@ umbrel-app/
 
 *(Ver galería en la tienda de aplicaciones)*
 
-## Changelog
+## 📋 Changelog
 
-### v1.1.0 (2026-04-08)
-- Fix: Numeración correcta de bloques mempool
-- Fix: Colores más intensos para mejor legibilidad
-- Fix: Limpieza de elementos HTML sobrantes
-- Mejora: Descripción actualizada para App Store
-- Nueva: Logo SVG personalizado
+### v1.1.0 (2026-04-08) - *Mejoras completas*
+**Nuevas funcionalidades:**
+- 🔧 Fuentes de datos múltiples (local/público/testnet)
+- ⚙️ Configuración avanzada de endpoints
+- 🖥️ Indicadores de fuente por card (🖥️ local / 🌐 público)
+- 📡 Monitorización conexión y tiempo respuesta
+- 💾 Cache inteligente para datos lentos
+- 🔄 Fallback automático local→público
+
+**Bugs arreglados:**
+- ✅ Numeración correcta bloques mempool
+- ✅ Colores más intensos para mejor legibilidad  
+- ✅ Limpieza elementos HTML sobrantes
+
+**Mejoras UI/UX:**
+- 🎨 Botones adicionales (🌐 fuente, ⚙️ config)
+- ⚡ Mejores indicadores de estado
+- 📊 Transparencia en fuentes de datos
+
+**Optimización:**
+- 🚀 Reducción llamadas API con cache
+- 📈 Mejor rendimiento general
 
 ### v1.0.0 (2026-03-30)
-- Lanzamiento inicial con todas las funcionalidades básicas
+- 🚀 Lanzamiento inicial con funcionalidades básicas
 
 ## Licencia
 
