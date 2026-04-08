@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Fondo circular naranja Bitcoin -->
+  <circle cx="100" cy="100" r="90" fill="#F7931A"/>
+  
+  <!-- Letra B estilizada -->
+  <path d="M70,50 Q85,40 100,50 Q115,60 115,75 Q115,90 100,100 Q115,110 115,125 Q115,140 100,150 Q85,160 70,150 L70,125 Q85,135 100,125 Q110,120 110,110 Q110,100 100,95 Q110,90 110,80 Q110,70 100,65 Q85,55 70,65 Z" fill="white"/>
+  
+  <!-- Detalles de gráfico/dashboard -->
+  <rect x="130" y="60" width="40" height="15" rx="3" fill="white" opacity="0.9"/>
+  <rect x="130" y="85" width="30" height="15" rx="3" fill="white" opacity="0.7"/>
+  <rect x="130" y="110" width="50" height="15" rx="3" fill="white" opacity="0.8"/>
+  <rect x="130" y="135" width="35" height="15" rx="3" fill="white" opacity="0.6"/>
+</svg>

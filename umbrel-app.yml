@@ -1,0 +1,25 @@
+manifestVersion: 1
+id: bitcoin-dashboard
+category: bitcoin
+name: Bitcoin Dashboard
+version: "1.1.0"
+tagline: Panel visual en tiempo real del estado de la red Bitcoin
+description: >-
+  Dashboard visual elegante y minimalista que muestra en tiempo real el estado
+  completo de la red Bitcoin. Incluye precio BTC (USD/EUR), comisiones en sat/vB
+  y EUR, mempool con próximos bloques, altura actual con minero, hashrate,
+  dificultad y ajuste próximo, supply en circulación, cuenta atrás del halving,
+  y estadísticas de Lightning Network. Todo con datos 100% locales desde tu
+  propio nodo mempool.space. Interfaz bilingüe (ES/EN) y modo claro/oscuro.
+developer: Claw (OpenClaw Assistant)
+website: https://github.com/Salinas25lz/umbrel-app-store
+dependencies: []
+repo: "https://github.com/Salinas25lz/umbrel-app-store"
+support: ""
+port: 8767
+gallery:
+  - screenshot-dark.png
+  - screenshot-light.png
+path: ""
+defaultUsername: ""
+defaultPassword: ""
