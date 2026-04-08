@@ -66,6 +66,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .card-sub{font-size:.75rem;color:var(--text-sub);margin-top:6px}
 .card-icon{position:absolute;top:16px;right:16px;font-size:1.6rem;opacity:.12}
 .card-badge{position:absolute;top:16px;right:16px;font-size:.5rem;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;background:var(--inner-bg);padding:2px 6px;border-radius:4px}
+.card-badge.green{background:#4caf8222;color:#4caf82}
+.card-badge.blue{background:#5b9bd522;color:#5b9bd5}
+.card-badge.purple{background:#a855f722;color:#a855f7}
+
+/* Source indicator */
+.source-indicator{position:absolute;bottom:8px;right:8px;font-size:.7rem;opacity:.7;cursor:help}
+.response-time{font-size:.6rem;color:var(--text-muted);margin-left:4px}
 
 /* Tags */
 .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:600;margin-top:6px}
@@ -149,11 +156,13 @@ canvas#sparkline{width:100%;height:50px;margin-top:10px;opacity:.85}
 
 <div class="header">
   <h1>₿ Bitcoin Dashboard</h1>
-  <div class="sub"><span class="dot"></span><span id="lbl-live">Live · tu nodo · 100% local</span></div>
+  <div class="sub"><span class="dot" id="connectionDot"></span><span id="lbl-live">Live</span> · <span id="sourceBadge" class="card-badge green">local · tu nodo</span> · <span id="responseTime" class="response-time"></span></div>
   <div id="lastUpdated"></div>
   <div class="controls">
+    <button class="ctrl-btn" onclick="toggleSource()" id="sourceBtn" title="Click para cambiar fuente de datos">🌐 Local</button>
     <button class="ctrl-btn" onclick="toggleLang()" id="langBtn">EN</button>
     <button class="ctrl-btn" onclick="toggleTheme()" id="themeBtn">☀️</button>
+    <button class="ctrl-btn" onclick="openConfig()" title="Configuración avanzada">⚙️</button>
   </div>
 </div>
 
@@ -332,11 +341,134 @@ canvas#sparkline{width:100%;height:50px;margin-top:10px;opacity:.85}
 </div>
 
 <script>
-const API = '/api';
+// ── Configuración de endpoints ───────────────────────────────────────────────
+const CONFIG = {
+  // Endpoints disponibles (el usuario puede cambiar)
+  endpoints: {
+    // Local (por defecto en Umbrel)
+    local: '/api',
+    // Público (mempool.space)
+    public: 'https://mempool.space/api',
+    // Público testnet (opcional)
+    testnet: 'https://mempool.space/testnet/api'
+  },
+  
+  // Fuente actual (se guarda en localStorage)
+  currentSource: localStorage.getItem('btcDashboardSource') || 'local',
+  
+  // Timeouts y retries
+  timeout: 10000,
+  retries: 2
+};
+
+// Helper para obtener API base según fuente
+function getAPI() {
+  return CONFIG.endpoints[CONFIG.currentSource] || CONFIG.endpoints.local;
+}
+
+// Cache simple en memoria
+const dataCache = {
+  difficulty: { data: null, timestamp: 0, ttl: 300000 }, // 5 minutos
+  hashrate: { data: null, timestamp: 0, ttl: 300000 },   // 5 minutos
+  dominance: { data: null, timestamp: 0, ttl: 600000 },  // 10 minutos
+  ln: { data: null, timestamp: 0, ttl: 300000 }          // 5 minutos
+};
+
+// Helper para fetch con timeout, retry, tracking y cache
+async function fetchWithRetry(url, options = {}, retries = CONFIG.retries, cacheKey = null) {
+  // Verificar cache si existe
+  if (cacheKey && dataCache[cacheKey]) {
+    const cached = dataCache[cacheKey];
+    if (Date.now() - cached.timestamp < cached.ttl) {
+      console.log(`Using cached data for ${cacheKey}`);
+      return cached.data;
+    }
+  }
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CONFIG.timeout);
+  const startTime = Date.now();
+  
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    
+    // Actualizar tiempo de respuesta en UI
+    updateResponseTime(responseTime);
+    updateConnectionStatus(true);
+    
+    // Guardar en cache si hay clave
+    if (cacheKey && dataCache[cacheKey]) {
+      dataCache[cacheKey] = { data, timestamp: Date.now(), ttl: dataCache[cacheKey].ttl };
+    }
+    
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    
+    // Intentar usar cache si hay error
+    if (cacheKey && dataCache[cacheKey] && dataCache[cacheKey].data) {
+      console.log(`Using stale cache for ${cacheKey} due to error`);
+      return dataCache[cacheKey].data;
+    }
+    
+    if (retries > 0) {
+      console.log(`Retrying ${url} (${retries} retries left)`);
+      return fetchWithRetry(url, options, retries - 1, cacheKey);
+    }
+    
+    updateConnectionStatus(false);
+    throw error;
+  }
+}
+
+// Actualizar estado de conexión
+function updateConnectionStatus(connected) {
+  const dot = document.getElementById('connectionDot');
+  if (!dot) return;
+  
+  if (connected) {
+    dot.style.background = '#4caf82';
+    dot.title = lang === 'es' ? 'Conectado' : 'Connected';
+  } else {
+    dot.style.background = '#ef476f';
+    dot.title = lang === 'es' ? 'Desconectado' : 'Disconnected';
+    dot.style.animation = 'pulse 1s infinite';
+  }
+}
+
+// Actualizar tiempo de respuesta
+function updateResponseTime(ms) {
+  const elem = document.getElementById('responseTime');
+  if (!elem) return;
+  
+  if (ms < 100) {
+    elem.textContent = `⚡${ms}ms`;
+    elem.style.color = '#4caf82';
+  } else if (ms < 500) {
+    elem.textContent = `✓${ms}ms`;
+    elem.style.color = '#ffd166';
+  } else {
+    elem.textContent = `⚠${ms}ms`;
+    elem.style.color = '#ef476f';
+  }
+  
+  elem.title = lang === 'es' ? `Tiempo de respuesta: ${ms}ms` : `Response time: ${ms}ms`;
+}
+
 let state = {};
 let sparkData = [];
 let lang  = localStorage.getItem('lang')  || 'es';
 let theme = localStorage.getItem('theme') || 'dark';
+let dataSources = {}; // Track de qué fuente vino cada dato
 
 document.documentElement.setAttribute('data-theme', theme);
 document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
@@ -446,6 +578,131 @@ function toggleTheme() {
   document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
 }
 
+// ── Gestión de fuentes de datos ──────────────────────────────────────────────
+function toggleSource() {
+  const sources = Object.keys(CONFIG.endpoints);
+  const currentIndex = sources.indexOf(CONFIG.currentSource);
+  const nextIndex = (currentIndex + 1) % sources.length;
+  CONFIG.currentSource = sources[nextIndex];
+  localStorage.setItem('btcDashboardSource', CONFIG.currentSource);
+  
+  // Reiniciar estado y recargar
+  state = {};
+  dataSources = {};
+  fetchAll();
+  updateSourceBadge();
+}
+
+function updateSourceBadge() {
+  const sourceBtn = document.getElementById('sourceBtn');
+  if (!sourceBtn) return;
+  
+  const sourceNames = {
+    local: lang === 'es' ? 'Local' : 'Local',
+    public: lang === 'es' ? 'Público' : 'Public',
+    testnet: 'Testnet'
+  };
+  
+  sourceBtn.textContent = `🌐 ${sourceNames[CONFIG.currentSource]}`;
+  sourceBtn.title = lang === 'es' 
+    ? `Fuente: ${CONFIG.endpoints[CONFIG.currentSource]}\nClick para cambiar`
+    : `Source: ${CONFIG.endpoints[CONFIG.currentSource]}\nClick to switch`;
+  
+  // Actualizar badge en header
+  const sourceBadge = document.getElementById('sourceBadge');
+  if (sourceBadge) {
+    const isLocal = CONFIG.currentSource === 'local';
+    sourceBadge.textContent = isLocal 
+      ? (lang === 'es' ? 'local · tu nodo' : 'local · your node')
+      : (lang === 'es' ? 'público · mempool.space' : 'public · mempool.space');
+    sourceBadge.className = `card-badge ${isLocal ? 'green' : 'blue'}`;
+  }
+}
+
+// Configuración avanzada
+function openConfig() {
+  const html = `
+    <div style="margin-bottom:16px">
+      <h3 style="font-size:.9rem;margin-bottom:8px;color:var(--text)">${lang === 'es' ? 'Configuración de endpoints' : 'Endpoint Configuration'}</h3>
+      <div style="display:grid;gap:8px;font-size:.8rem">
+        <div>
+          <label style="display:block;color:var(--text-sub);margin-bottom:4px;font-size:.7rem">${lang === 'es' ? 'Endpoint local:' : 'Local endpoint:'}</label>
+          <input type="text" id="configLocal" value="${CONFIG.endpoints.local}" style="width:100%;padding:6px;background:var(--inner-bg);border:1px solid var(--card-border);border-radius:6px;color:var(--text);font-size:.8rem">
+        </div>
+        <div>
+          <label style="display:block;color:var(--text-sub);margin-bottom:4px;font-size:.7rem">${lang === 'es' ? 'Endpoint público:' : 'Public endpoint:'}</label>
+          <input type="text" id="configPublic" value="${CONFIG.endpoints.public}" style="width:100%;padding:6px;background:var(--inner-bg);border:1px solid var(--card-border);border-radius:6px;color:var(--text);font-size:.8rem">
+        </div>
+        <div>
+          <label style="display:block;color:var(--text-sub);margin-bottom:4px;font-size:.7rem">${lang === 'es' ? 'Endpoint testnet:' : 'Testnet endpoint:'}</label>
+          <input type="text" id="configTestnet" value="${CONFIG.endpoints.testnet}" style="width:100%;padding:6px;background:var(--inner-bg);border:1px solid var(--card-border);border-radius:6px;color:var(--text);font-size:.8rem">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="saveConfig()" style="padding:6px 12px;background:#4caf82;color:white;border:none;border-radius:6px;font-size:.8rem;cursor:pointer">${lang === 'es' ? 'Guardar' : 'Save'}</button>
+      <button onclick="closeModal()" style="padding:6px 12px;background:var(--inner-bg);color:var(--text);border:1px solid var(--card-border);border-radius:6px;font-size:.8rem;cursor:pointer">${lang === 'es' ? 'Cancelar' : 'Cancel'}</button>
+    </div>
+  `;
+  
+  document.getElementById('modalTitle').textContent = lang === 'es' ? '⚙️ Configuración' : '⚙️ Configuration';
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveConfig() {
+  CONFIG.endpoints.local = document.getElementById('configLocal').value;
+  CONFIG.endpoints.public = document.getElementById('configPublic').value;
+  CONFIG.endpoints.testnet = document.getElementById('configTestnet').value;
+  
+  // Guardar en localStorage
+  localStorage.setItem('btcDashboardEndpoints', JSON.stringify(CONFIG.endpoints));
+  
+  // Reiniciar y recargar
+  state = {};
+  dataSources = {};
+  fetchAll();
+  closeModal();
+}
+
+// Cargar configuración guardada
+function loadSavedConfig() {
+  try {
+    const saved = localStorage.getItem('btcDashboardEndpoints');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      CONFIG.endpoints = { ...CONFIG.endpoints, ...parsed };
+    }
+  } catch (e) {
+    console.log('No saved config or error loading:', e);
+  }
+}
+
+// Añadir badge de fuente a cada card
+function addSourceIndicators() {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    const cardId = card.querySelector('[id]')?.id || '';
+    const dataType = cardId.replace(/[0-9]/g, '');
+    
+    if (dataSources[dataType] || dataSources.bitcoin) {
+      const source = dataSources[dataType] || dataSources.bitcoin;
+      let indicator = card.querySelector('.source-indicator');
+      
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'source-indicator';
+        card.appendChild(indicator);
+      }
+      
+      indicator.textContent = source === 'local' ? '🖥️' : '🌐';
+      indicator.title = source === 'local' 
+        ? (lang === 'es' ? 'Datos locales' : 'Local data')
+        : (lang === 'es' ? 'Datos públicos' : 'Public data');
+    }
+  });
+}
+
 // ── Utils ─────────────────────────────────────────────────────────────────────
 const fmt    = (n,d=0) => n == null ? '–' : n.toLocaleString(lang==='es'?'es-ES':'en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtDate = d => d.toLocaleDateString(lang==='es'?'es-ES':'en-US',{day:'numeric',month:'long',year:'numeric'});
@@ -457,50 +714,111 @@ function satsToBTC(sats){ return (sats/1e8).toFixed(0); }
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 async function fetchAll() {
-  const [fees, diff, mblocks, hr, prices, height, blocks, ln] = await Promise.allSettled([
-    fetch(`${API}/v1/fees/recommended`).then(r=>r.json()),
-    fetch(`${API}/v1/difficulty-adjustment`).then(r=>r.json()),
-    fetch(`${API}/v1/fees/mempool-blocks`).then(r=>r.json()),
-    fetch(`${API}/v1/mining/hashrate/3d`).then(r=>r.json()),
-    fetch(`${API}/v1/prices`).then(r=>r.json()),
-    fetch(`${API}/blocks/tip/height`).then(r=>r.json()),
-    fetch(`${API}/blocks`).then(r=>r.json()),
-    fetch(`${API}/v1/lightning/statistics/latest`).then(r=>r.json()),
-  ]);
+  const API = getAPI();
+  const sourceName = CONFIG.currentSource;
+  
+  try {
+    const [fees, diff, mblocks, hr, prices, height, blocks, ln] = await Promise.allSettled([
+      fetchWithRetry(`${API}/v1/fees/recommended`).catch(() => null), // No cache (cambia rápido)
+      fetchWithRetry(`${API}/v1/difficulty-adjustment`, {}, CONFIG.retries, 'difficulty').catch(() => null),
+      fetchWithRetry(`${API}/v1/fees/mempool-blocks`).catch(() => null), // No cache (cambia rápido)
+      fetchWithRetry(`${API}/v1/mining/hashrate/3d`, {}, CONFIG.retries, 'hashrate').catch(() => null),
+      fetchWithRetry(`${API}/v1/prices`).catch(() => null), // No cache (cambia rápido)
+      fetchWithRetry(`${API}/blocks/tip/height`).catch(() => null), // No cache (cambia rápido)
+      fetchWithRetry(`${API}/blocks`).catch(() => null), // No cache (cambia rápido)
+      fetchWithRetry(`${API}/v1/lightning/statistics/latest`, {}, CONFIG.retries, 'ln').catch(() => null),
+    ]);
 
-  // Height + blocks first so renderMempool has state.height
-  if(height.status==='fulfilled' && blocks.status==='fulfilled'){
-    state.height = height.value;
-    state.blocks = blocks.value;
-    renderBlock();
+    // Track fuentes de datos
+    dataSources.bitcoin = sourceName;
+    
+    // Height + blocks first so renderMempool has state.height
+    if(height.status==='fulfilled' && height.value){
+      state.height = height.value;
+      dataSources.height = sourceName;
+    }
+    
+    if(blocks.status==='fulfilled' && blocks.value){
+      state.blocks = blocks.value;
+      dataSources.blocks = sourceName;
+    }
+    
+    if(height.value && blocks.value) {
+      renderBlock();
+    }
+    
+    if(prices.status==='fulfilled' && prices.value) { 
+      state.prices = prices.value;  
+      dataSources.prices = sourceName;
+      renderPrice(); 
+    }
+    
+    if(fees.status==='fulfilled' && fees.value) { 
+      state.fees = fees.value;    
+      dataSources.fees = sourceName;
+      renderFees(); 
+    }
+    
+    if(diff.status==='fulfilled' && diff.value) { 
+      state.diff = diff.value;    
+      dataSources.diff = sourceName;
+      renderDiff(); 
+    }
+    
+    if(hr.status==='fulfilled' && hr.value) { 
+      state.hr = hr.value;      
+      dataSources.hr = sourceName;
+      renderHashrate(); 
+    }
+    
+    if(mblocks.status==='fulfilled' && mblocks.value) { 
+      state.mblocks = mblocks.value; 
+      dataSources.mblocks = sourceName;
+    }
+    
+    if(ln.status==='fulfilled' && ln.value?.latest) { 
+      state.ln = ln.value.latest; 
+      dataSources.ln = sourceName;
+      renderLN(); 
+    } else if(!state.ln) { 
+      renderLN(); // show unavailable state
+    }
+
+    // Render mempool solo si tenemos height y mblocks
+    if(state.height != null && state.mblocks) {
+      renderMempool();
+    }
+
+    updateTimestamp();
+    updateSourceBadge();
+    addSourceIndicators();
+    
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    // Intentar fallback a público si estamos en local
+    if (CONFIG.currentSource === 'local') {
+      console.log('Local failed, trying public as fallback...');
+      CONFIG.currentSource = 'public';
+      localStorage.setItem('btcDashboardSource', 'public');
+      fetchAll();
+    }
   }
-  if(prices.status==='fulfilled')  { state.prices  = prices.value;  renderPrice(); }
-  if(fees.status==='fulfilled')    { state.fees    = fees.value;    renderFees(); }
-  if(diff.status==='fulfilled')    { state.diff    = diff.value;    renderDiff(); }
-  if(hr.status==='fulfilled')      { state.hr      = hr.value;      renderHashrate(); }
-  if(mblocks.status==='fulfilled') { state.mblocks = mblocks.value; }
-  if(ln.status==='fulfilled' && ln.value?.latest) { state.ln = ln.value.latest; renderLN(); }
-  else if(!state.ln) renderLN(); // show unavailable state
-
-  // Render mempool solo si tenemos height y mblocks
-  if(state.height != null && state.mblocks) {
-    renderMempool();
-  }
-
-  updateTimestamp();
 }
 
 function fetchDominance() {
-  fetch('https://api.coingecko.com/api/v3/global')
-    .then(r => r.json())
+  fetchWithRetry('https://api.coingecko.com/api/v3/global', {}, CONFIG.retries, 'dominance')
     .then(d => {
       state.dominance    = d.data?.market_cap_percentage?.btc ?? null;
       state.domChange    = d.data?.market_cap_change_percentage_24h_usd ?? null;
       state.totalMktCap  = d.data?.total_market_cap?.usd ?? null;
       state.btcMktCap    = d.data?.total_market_cap?.btc ? null : null; // not directly available
+      dataSources.dominance = 'coingecko';
       renderDominance();
     })
-    .catch(() => { state.dominance = null; renderDominance(); });
+    .catch(() => { 
+      state.dominance = null; 
+      renderDominance(); 
+    });
 }
 
 // ── Render: Price ─────────────────────────────────────────────────────────────
@@ -879,15 +1197,28 @@ function updateTimestamp() {
 }
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
+// Cargar configuración guardada
+loadSavedConfig();
+
+// Inicializar UI
+updateSourceBadge();
+updateConnectionStatus(true);
+
 fetchAll();
 fetchDominance();
 
 // Precio cada 30s
 setInterval(() => {
-  fetch(`${API}/v1/prices`).then(r=>r.json()).then(d => {
-    state.prices = d; renderPrice();
+  const API = getAPI();
+  fetchWithRetry(`${API}/v1/prices`).then(d => {
+    state.prices = d; 
+    dataSources.prices = CONFIG.currentSource;
+    renderPrice();
     if(state.fees) renderFees();
     updateTimestamp();
+    addSourceIndicators();
+  }).catch(() => {
+    // Silently fail, will retry next interval
   });
 }, 30000);
 
