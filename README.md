@@ -18,7 +18,7 @@ Un dashboard visual elegante y minimalista para monitorear el estado completo de
 - **Lightning Network**: Nodos, canales, capacidad total
 - **Dominancia BTC**: Desde CoinGecko (opcional)
 
-### 🔧 **Funcionalidades avanzadas (v1.1.0)**
+### 🔧 **Funcionalidades avanzadas (v1.2.0)**
 - **✅ Fuentes múltiples**: Local (tu nodo) / Público (mempool.space) / Testnet
 - **✅ Configuración flexible**: Endpoints personalizables vía UI
 - **✅ Fallback automático**: Si local falla → usa público automáticamente
@@ -74,7 +74,7 @@ umbrel-app/
 
 ## 📋 Changelog
 
-### v1.1.0 (2026-04-08) - *Mejoras completas*
+### v1.2.0 (2026-04-08) - *Mejoras completas*
 **Nuevas funcionalidades:**
 - 🔧 Fuentes de datos múltiples (local/público/testnet)
 - ⚙️ Configuración avanzada de endpoints

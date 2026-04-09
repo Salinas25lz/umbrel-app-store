@@ -1,0 +1,28 @@
+# Build artifacts
+*.tar.gz
+*.zip
+*.tgz
+
+# Screenshots (generar dinámicamente)
+screenshot-*.png
+
+# Development files
+.DS_Store
+Thumbs.db
+node_modules/
+.env
+*.log
+*.tmp
+*.backup
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
