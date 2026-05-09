@@ -2,104 +2,114 @@
 
 ![Logo](logo.svg)
 
-Un dashboard visual elegante y minimalista para monitorear el estado completo de la red Bitcoin en tiempo real desde tu nodo Umbrel. **Versión 1.1.0** con fuentes de datos configurables, cache inteligente y monitorización avanzada.
+An elegant, minimalistic visual dashboard that monitors the full state of the
+Bitcoin network in real time, served from your own Umbrel node.
 
-## ✨ Características principales
+> The dashboard UI itself is bilingual (EN/ES toggle in the header). All
+> repository documentation is in English.
 
-### 📊 **Datos en tiempo real**
-- **Precio BTC**: USD/EUR con gráfico sparkline y cambio de sesión
-- **Comisiones**: Sat/vB + coste estimado en EUR (transacción estándar)
-- **Mempool**: Próximos bloques con tamaño, fees y numeración correcta
-- **Bloque actual**: Altura, minero, timestamp, transacciones
-- **Hashrate**: EH/s actual + gráfico últimos días
-- **Dificultad**: Cambio estimado, bloques restantes, progreso
-- **Supply**: BTC en circulación + porcentaje minado
-- **Halving**: Cuenta atrás en bloques + fecha estimada
-- **Lightning Network**: Nodos, canales, capacidad total
-- **Dominancia BTC**: Desde CoinGecko (opcional)
+---
 
-### 🔧 **Funcionalidades avanzadas (v1.2.0)**
-- **✅ Fuentes múltiples**: Local (tu nodo) / Público (mempool.space) / Testnet
-- **✅ Configuración flexible**: Endpoints personalizables vía UI
-- **✅ Fallback automático**: Si local falla → usa público automáticamente
-- **✅ Cache inteligente**: Datos que cambian poco se cachean (5-10 min)
-- **✅ Monitorización**: Estado conexión + tiempo respuesta en ms
-- **✅ Transparencia**: Indicadores 🖥️/🌐 muestran fuente de cada dato
-- **✅ Optimizado**: Menos llamadas API, mejor rendimiento
+## ✨ Features
 
-## 🎨 Interfaz de usuario
+### 📊 Real-time data
 
-- **🌐 Bilingüe**: Español/Inglés (toggle en header)
-- **☀️ Tema claro/oscuro**: Cambio instantáneo
-- **📱 Responsive**: Diseño adaptable móvil/desktop
-- **ℹ️ Modales**: Información detallada en cada sección
-- **⚙️ Configuración**: UI integrada para endpoints
-- **📊 Indicadores**: Fuente de datos en cada card
-- **⚡ Estado**: Conexión + tiempo respuesta en tiempo real
+- **BTC price** — USD/EUR with sparkline and session change
+- **Fees** — sat/vB plus EUR estimate for a standard transaction
+- **Mempool** — upcoming blocks with size, median fees and correct numbering
+- **Current block** — height, miner, timestamp and transactions
+- **Hashrate** — current EH/s with multi-day chart
+- **Difficulty** — next-adjustment estimate, blocks remaining, period progress
+- **Supply** — circulating BTC and percentage mined
+- **Halving** — blocks-to-go countdown and estimated date
+- **Lightning Network** — nodes, channels, total capacity
+- **BTC dominance** — via CoinGecko (optional)
 
-## Requisitos
+### 🔧 v1.2.0 highlights
 
-- Umbrel con mempool.space instalado y funcionando
-- Puerto 8767 disponible
+- Multiple data sources (your local node / public mempool.space / testnet)
+- Endpoint configuration from the UI
+- Automatic fallback local → public on failure
+- Smart caching for slow-changing data (5–10 min)
+- Connection state and response-time monitoring
+- Per-card source indicators (🖥️ local / 🌐 public)
+- Reduced API call count, lower upstream load
 
-## Instalación
+## 🎨 User interface
 
-1. Añade esta app a tu tienda de aplicaciones de Umbrel
-2. Instala desde la interfaz de Umbrel
-3. Accede a `http://tu-umbrel.local:8767`
+- Bilingual (EN/ES) with header toggle
+- Light / dark theme switch
+- Responsive (mobile + desktop)
+- Detail modals per card
+- Built-in configuration UI
+- Live connection status
 
-## Configuración
+## Requirements
 
-No requiere configuración. Se conecta automáticamente al mempool.space local en `http://localhost:3006` (o `http://mempool.space` si usas proxy nginx).
+- Umbrel with the `mempool` app installed
+- Port 8767 free
 
-## Desarrollo
+## Installation
 
-El dashboard es una aplicación web estática (HTML/CSS/JS) que se sirve via nginx. Los datos se obtienen via API del mempool.space local.
+### From an Umbrel community app store *(recommended once published)*
 
-### Estructura
+1. Add the community app store that hosts this app
+2. Install **Bitcoin Dashboard** from the Umbrel UI
+3. Open `http://umbrel.local:8767`
+
+### Manual sideload *(for testing during development)*
+
+```bash
+git clone https://github.com/Salinas25lz/umbrel-app-store.git
+cd umbrel-app-store
+bash install.sh
+```
+
+## Configuration
+
+No configuration required. The dashboard auto-detects the local mempool.space
+endpoint via the nginx proxy and falls back to the public one if local fails.
+All user preferences live in the browser's `localStorage`.
+
+## Repository layout
 
 ```
-umbrel-app/
-├── docker-compose.yml    # Configuración Docker
-├── umbrel-app.yml        # Metadatos para Umbrel App Store
-├── logo.svg              # Logo de la aplicación
+umbrel-app-store/
+├── docker-compose.yml      # Service definition for Umbrel
+├── umbrel-app.yml          # App store manifest
+├── nginx.conf              # Reverse proxy for /api/
+├── logo.svg                # Repo logo
+├── icon.svg                # Square icon for store listing
+├── install.sh              # Manual sideload script
 ├── html/
-│   └── index.html        # Dashboard principal
-└── README.md             # Esta documentación
+│   └── index.html          # Single-page dashboard
+└── .github/workflows/      # Manifest + lint CI
 ```
-
-## Capturas de pantalla
-
-*(Ver galería en la tienda de aplicaciones)*
 
 ## 📋 Changelog
 
-### v1.2.0 (2026-04-08) - *Mejoras completas*
-**Nuevas funcionalidades:**
-- 🔧 Fuentes de datos múltiples (local/público/testnet)
-- ⚙️ Configuración avanzada de endpoints
-- 🖥️ Indicadores de fuente por card (🖥️ local / 🌐 público)
-- 📡 Monitorización conexión y tiempo respuesta
-- 💾 Cache inteligente para datos lentos
-- 🔄 Fallback automático local→público
+### v1.2.0 — 2026-04-09
 
-**Bugs arreglados:**
-- ✅ Numeración correcta bloques mempool
-- ✅ Colores más intensos para mejor legibilidad  
-- ✅ Limpieza elementos HTML sobrantes
+**New:**
+- Multiple data sources (local / public / testnet)
+- Endpoint configuration UI
+- Per-card source indicators
+- Connection and response-time monitoring
+- Smart cache for slow-changing data
+- Automatic local → public fallback
 
-**Mejoras UI/UX:**
-- 🎨 Botones adicionales (🌐 fuente, ⚙️ config)
-- ⚡ Mejores indicadores de estado
-- 📊 Transparencia en fuentes de datos
+**Fixes:**
+- Correct mempool block numbering
+- Stronger color contrast
+- Cleanup of stray HTML elements
 
-**Optimización:**
-- 🚀 Reducción llamadas API con cache
-- 📈 Mejor rendimiento general
+**Security cleanup:**
+- Removed historical artefacts from git history (`git filter-repo`)
 
-### v1.0.0 (2026-03-30)
-- 🚀 Lanzamiento inicial con funcionalidades básicas
+### v1.0.0 — 2026-03-30
 
-## Licencia
+- Initial release with core functionality
 
-MIT
+## License
+
+[MIT](LICENSE)

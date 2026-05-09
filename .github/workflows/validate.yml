@@ -1,0 +1,83 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  manifest:
+    name: Validate umbrel-app.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tooling
+        run: pip install --quiet yamllint pyyaml
+
+      - name: yamllint
+        run: |
+          yamllint -d '{extends: default, rules: {line-length: {max: 200}, document-start: disable, indentation: {spaces: 2}}}' umbrel-app.yml
+
+      - name: Validate required fields
+        run: |
+          python - <<'PY'
+          import sys, yaml
+          required = [
+              "manifestVersion", "id", "category", "name", "version",
+              "tagline", "description", "developer", "website", "port", "repo",
+          ]
+          with open("umbrel-app.yml") as f:
+              data = yaml.safe_load(f)
+          missing = [k for k in required if k not in data or data[k] in (None, "")]
+          if missing:
+              print(f"Missing or empty required fields: {missing}")
+              sys.exit(1)
+          if not isinstance(data["port"], int) or not (1024 <= data["port"] <= 65535):
+              print(f"Invalid port: {data['port']}")
+              sys.exit(1)
+          print("Manifest OK")
+          for k in required:
+              print(f"  {k}: {data[k]!r}")
+          PY
+
+  compose:
+    name: Validate docker-compose.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stub APP_DATA_DIR for compose validation
+        run: |
+          mkdir -p /tmp/app-data/html
+          cp nginx.conf /tmp/app-data/nginx.conf
+
+      - name: docker compose config
+        env:
+          APP_DATA_DIR: /tmp/app-data
+        run: docker compose -f docker-compose.yml config --quiet
+
+  secrets:
+    name: Scan for secrets and PII
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION="8.21.2"
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar xz -C /tmp gitleaks
+          /tmp/gitleaks version
+
+      - name: Scan working tree
+        run: /tmp/gitleaks detect --source . --no-git --redact --verbose --exit-code 1
+
+      - name: Scan full history
+        run: /tmp/gitleaks detect --source . --redact --verbose --exit-code 1

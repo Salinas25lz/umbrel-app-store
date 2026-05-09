@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   web:
     image: nginx:alpine
@@ -12,7 +10,7 @@ services:
     networks:
       - default
     extra_hosts:
-      - "mempool:10.21.0.1"  # IP del contenedor mempool en Umbrel
+      - "mempool:${APP_MEMPOOL_API_IP:-10.21.0.1}"
 
 networks:
   default:

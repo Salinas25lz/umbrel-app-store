@@ -3,7 +3,7 @@
 *.zip
 *.tgz
 
-# Screenshots (generar dinámicamente)
+# Screenshots (generated dynamically, not tracked)
 screenshot-*.png
 
 # Development files
@@ -22,7 +22,6 @@ node_modules/
 *.swo
 
 # OS files
-.DS_Store
 ._*
 .Spotlight-V100
 .Trashes

@@ -1,55 +1,55 @@
-# ₿ Bitcoin Dashboard - Para Tienda de Aplicaciones Umbrel
+# ₿ Bitcoin Dashboard — Notes for the Umbrel Community App Store
 
-## Información para publicación
+## Publication metadata
 
-### Metadatos (umbrel-app.yml)
 ```yaml
 id: bitcoin-dashboard
 name: Bitcoin Dashboard
-version: "1.1.0"
-tagline: Panel visual en tiempo real del estado de la red Bitcoin
-description: >-
-  Dashboard visual elegante que muestra en tiempo real el estado completo
-  de la red Bitcoin. Incluye precio BTC (USD/EUR), comisiones en sat/vB y EUR,
-  mempool con próximos bloques, altura actual con minero, hashrate, dificultad,
-  supply, halving, y estadísticas de Lightning Network. Con fuentes de datos
-  configurables (local/público), cache inteligente, y monitorización avanzada.
+version: "1.2.0"
+tagline: Real-time visual dashboard for the Bitcoin network
 category: bitcoin
 port: 8767
-developer: Claw (OpenClaw Assistant)
+developer: Salinas25lz
 website: https://github.com/Salinas25lz/umbrel-app-store
+dependencies:
+  - mempool
 ```
 
-### Características destacadas para la tienda
-1. **✅ 100% local** - Datos de tu propio nodo mempool.space
-2. **✅ Configurable** - Cambia entre fuentes local/público/testnet
-3. **✅ Sin configuración** - Funciona out-of-the-box
-4. **✅ Bilingüe** - Español/Inglés
-5. **✅ Tema claro/oscuro** - Adaptable a preferencias
-6. **✅ Optimizado** - Cache reduce carga del servidor
-7. **✅ Monitorizado** - Estado conexión + tiempos respuesta
+## Highlights for the store listing
 
-### Requisitos
-- Umbrel con mempool.space instalado (recomendado)
-- Puerto 8767 disponible
-- 10MB de espacio
+1. **100% local** — Reads from your own mempool.space node
+2. **Configurable sources** — Switch between local / public / testnet
+3. **Zero configuration** — Works out of the box
+4. **Bilingual UI** — English / Spanish
+5. **Light & dark theme**
+6. **Smart caching** — Reduces upstream load
+7. **Live monitoring** — Connection status and response time
 
-### Screenshots recomendadas
-1. **screenshot-dark.png** - Vista modo oscuro
-2. **screenshot-light.png** - Vista modo claro
-3. **screenshot-mobile.png** - Vista responsive móvil (opcional)
+## Requirements
 
-### Notas para el mantenedor
-- La app usa proxy nginx para conectar a mempool.space local
-- Si mempool.space no está instalado, fallback automático a público
-- Configuración guardada en localStorage del navegador
-- No requiere reinicios tras cambios de configuración
+- Umbrel with the `mempool` app installed (declared as a dependency)
+- Port 8767 free
+- ~10 MB of disk
 
-### Enlaces
-- **Repo**: `https://github.com/Salinas25lz/umbrel-app-store`
-- **Dashboard demo**: `http://umbrel.local:8767`
-- **Issues**: En el repo de GitHub
+## Screenshots
+
+Screenshots are added separately to the listing PR (`screenshot-dark.png`,
+`screenshot-light.png`, optional `screenshot-mobile.png`). They are **not**
+committed to this repository to keep the repo lean — the community app
+store builds the gallery from the submission.
+
+## Maintainer notes
+
+- The app uses an nginx proxy to reach the local mempool.space node
+- If the local node is unreachable, the UI falls back to public mempool.space
+- User configuration is stored in browser `localStorage`; no server-side state
+- No restart required after configuration changes
+
+## Links
+
+- **Repo**: <https://github.com/Salinas25lz/umbrel-app-store>
+- **Issues**: report on the GitHub repository
 
 ---
 
-*Esta app está mantenida activamente. Reportar issues en el repositorio.*
+*Actively maintained. Please open issues on the repo.*

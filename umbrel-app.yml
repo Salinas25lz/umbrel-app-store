@@ -2,24 +2,31 @@ manifestVersion: 1
 id: bitcoin-dashboard
 category: bitcoin
 name: Bitcoin Dashboard
-version: "1.1.0"
-tagline: Panel visual en tiempo real del estado de la red Bitcoin
+version: "1.2.0"
+tagline: Real-time visual dashboard for the Bitcoin network
 description: >-
-  Dashboard visual elegante y minimalista que muestra en tiempo real el estado
-  completo de la red Bitcoin. Incluye precio BTC (USD/EUR), comisiones en sat/vB
-  y EUR, mempool con próximos bloques, altura actual con minero, hashrate,
-  dificultad y ajuste próximo, supply en circulación, cuenta atrás del halving,
-  y estadísticas de Lightning Network. Todo con datos 100% locales desde tu
-  propio nodo mempool.space. Interfaz bilingüe (ES/EN) y modo claro/oscuro.
-developer: Claw (OpenClaw Assistant)
+  Elegant, minimalistic dashboard that monitors the full state of the Bitcoin
+  network in real time. Shows BTC price (USD/EUR), fees in sat/vB and EUR,
+  mempool with upcoming blocks, current block height with miner, hashrate,
+  difficulty and next adjustment, circulating supply, halving countdown and
+  Lightning Network stats. Configurable data sources (local mempool.space /
+  public / testnet) with automatic fallback, intelligent caching and live
+  connection monitoring. Bilingual UI (EN/ES), light and dark themes.
+releaseNotes: >-
+  v1.2.0 — Multiple data sources (local/public/testnet), endpoint UI,
+  automatic fallback local→public, intelligent cache, response-time
+  monitoring, per-card source indicators. Bug fixes in mempool block
+  numbering and color contrast.
+developer: Salinas25lz
 website: https://github.com/Salinas25lz/umbrel-app-store
-dependencies: []
+dependencies:
+  - mempool
 repo: "https://github.com/Salinas25lz/umbrel-app-store"
-support: ""
+support: "https://github.com/Salinas25lz/umbrel-app-store/issues"
 port: 8767
-gallery:
-  - screenshot-dark.png
-  - screenshot-light.png
+gallery: []
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+submitter: Salinas25lz
+submission: ""
