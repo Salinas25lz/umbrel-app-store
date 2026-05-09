@@ -3,6 +3,9 @@
 *.zip
 *.tgz
 
+# Local working dir for logo iterations / previews
+variants/
+
 # Screenshots (generated dynamically, not tracked)
 screenshot-*.png
 
