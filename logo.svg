@@ -1,39 +1,118 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 128" width="480" height="128">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 128" width="520" height="128">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#1E293B"/>
-      <stop offset="100%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#070B17"/>
     </linearGradient>
-    <linearGradient id="amber" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0%" stop-color="#B45309"/>
-      <stop offset="55%" stop-color="#F59E0B"/>
-      <stop offset="100%" stop-color="#FDE68A"/>
+    <linearGradient id="carbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1F2937"/>
+      <stop offset="50%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1F2937"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.55">
-      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.5"/>
+    <linearGradient id="display" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0F1C"/>
+      <stop offset="100%" stop-color="#020410"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.3"/>
       <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ledRed" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FEE2E2"/>
+      <stop offset="40%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#7F1D1D"/>
+    </radialGradient>
+    <radialGradient id="ledGreen" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#DCFCE7"/>
+      <stop offset="40%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#14532D"/>
+    </radialGradient>
+    <radialGradient id="ledBlue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#DBEAFE"/>
+      <stop offset="40%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </radialGradient>
+    <radialGradient id="ledYellow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="40%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#713F12"/>
+    </radialGradient>
+    <radialGradient id="ledMagenta" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FCE7F3"/>
+      <stop offset="40%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#831843"/>
+    </radialGradient>
+    <radialGradient id="ledCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#CFFAFE"/>
+      <stop offset="40%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#164E63"/>
     </radialGradient>
   </defs>
 
-  <!-- Mark (square icon mirroring icon.svg) -->
+  <!-- ==================== Mark (square cockpit, mirrors icon.svg) ==================== -->
   <g transform="translate(8 8)">
     <rect width="112" height="112" rx="26" fill="url(#bg)"/>
-    <circle cx="56" cy="46" r="38" fill="url(#glow)"/>
-    <text x="56" y="74"
+    <circle cx="56" cy="56" r="44" fill="url(#glow)"/>
+
+    <!-- Wheel outer carbon ring -->
+    <path d="M 25 45
+             Q 25 27 42 25
+             L 70 25
+             Q 87 27 87 45
+             L 87 67
+             Q 87 85 70 87
+             L 42 87
+             Q 25 85 25 67 Z"
+          fill="url(#carbon)" stroke="#0B1220" stroke-width="1"/>
+    <!-- Inner bezel -->
+    <path d="M 31 47
+             Q 31 32 44 31
+             L 68 31
+             Q 81 32 81 47
+             L 81 65
+             Q 81 80 68 81
+             L 44 81
+             Q 31 80 31 65 Z"
+          fill="#111827" stroke="#374151" stroke-width="0.7"/>
+
+    <!-- Top rev LEDs -->
+    <circle cx="40" cy="36" r="1.8" fill="url(#ledGreen)"/>
+    <circle cx="48" cy="34" r="1.8" fill="url(#ledGreen)"/>
+    <circle cx="56" cy="33" r="1.8" fill="url(#ledYellow)"/>
+    <circle cx="64" cy="34" r="1.8" fill="url(#ledRed)"/>
+    <circle cx="72" cy="36" r="1.8" fill="url(#ledRed)"/>
+
+    <!-- OLED display -->
+    <rect x="40" y="42" width="32" height="17" rx="2" fill="url(#display)" stroke="#1F2937" stroke-width="0.5"/>
+    <text x="44" y="51"
           font-family="'Helvetica Neue','Inter','Arial',sans-serif"
-          font-size="72" font-weight="800"
-          text-anchor="middle" fill="url(#amber)"
-          letter-spacing="-1.5">&#x20BF;</text>
-    <polyline points="14,98 30,94 44,96 58,90 72,86 86,80 100,76"
-              stroke="url(#amber)" stroke-width="1.6" fill="none"
-              stroke-linecap="round" stroke-linejoin="round"
-              stroke-opacity="0.7"/>
-    <circle cx="100" cy="76" r="2" fill="#FDE68A"/>
+          font-size="6" font-weight="800"
+          fill="#F59E0B">&#x20BF;</text>
+    <polyline points="44,56 49,54 54,55 59,52 64,50 69,48"
+              stroke="#F59E0B" stroke-width="0.7" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Buttons cluster bottom -->
+    <circle cx="40" cy="68" r="3" fill="url(#ledRed)"     stroke="#1F2937" stroke-width="0.4"/>
+    <circle cx="40" cy="76" r="3" fill="url(#ledYellow)"  stroke="#1F2937" stroke-width="0.4"/>
+    <circle cx="52" cy="72" r="3" fill="url(#ledGreen)"   stroke="#1F2937" stroke-width="0.4"/>
+    <circle cx="60" cy="72" r="3" fill="url(#ledCyan)"    stroke="#1F2937" stroke-width="0.4"/>
+    <circle cx="72" cy="68" r="3" fill="url(#ledMagenta)" stroke="#1F2937" stroke-width="0.4"/>
+    <circle cx="72" cy="76" r="3" fill="url(#ledBlue)"    stroke="#1F2937" stroke-width="0.4"/>
+
+    <!-- Side dials -->
+    <circle cx="33" cy="56" r="3.5" fill="#0F172A" stroke="#374151" stroke-width="0.5"/>
+    <line x1="33" y1="56" x2="33" y2="53" stroke="#F59E0B" stroke-width="0.8" stroke-linecap="round"/>
+    <circle cx="79" cy="56" r="3.5" fill="#0F172A" stroke="#374151" stroke-width="0.5"/>
+    <line x1="79" y1="56" x2="81" y2="54" stroke="#F59E0B" stroke-width="0.8" stroke-linecap="round"/>
+
+    <!-- Bottom grip cutout -->
+    <rect x="44" y="90" width="24" height="2.5" rx="1.2" fill="#0B1220"/>
   </g>
 
-  <!-- Wordmark -->
-  <g font-family="'Helvetica Neue','Inter','Arial',sans-serif" fill="#0F172A">
-    <text x="140" y="62" font-size="34" font-weight="700" letter-spacing="-0.5">Bitcoin</text>
-    <text x="140" y="98" font-size="34" font-weight="300" letter-spacing="0.5" fill="#475569">Dashboard</text>
+  <!-- ==================== Wordmark ==================== -->
+  <g font-family="'Helvetica Neue','Inter','Arial',sans-serif">
+    <text x="140" y="62" font-size="34" font-weight="700" fill="#0F172A" letter-spacing="-0.5">Bitcoin</text>
+    <text x="140" y="98" font-size="34" font-weight="300" fill="#475569" letter-spacing="0.5">Dashboard</text>
   </g>
 </svg>
